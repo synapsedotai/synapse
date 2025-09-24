@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { query } from '../db.js';
+import { prisma } from '../db.js';
 
 export const expertiseRouter = Router();
 
@@ -12,14 +12,13 @@ expertiseRouter.get('/api/expertise', async (req, res) => {
     return res.status(400).json({ error: parsed.error.issues.map(i => ({ field: i.path.join('.'), message: i.message })) });
   }
   const { employeeId } = parsed.data;
-  const rows = await query(
-    `select t.name, e.score, e.freshness_days
-     from expertise_scores e join topics t on t.id = e.topic_id
-     where e.employee_id = $1
-     order by score desc`,
-    [employeeId]
-  );
-  res.json(rows.rows);
+  const rows = await prisma.$queryRaw<Array<{ name: string; score: number; freshness_days: number }>>`
+    select t.name, e.score, e.freshness_days
+    from expertise_scores e join topics t on t.id = e.topic_id
+    where e.employee_id = ${employeeId}
+    order by score desc
+  `;
+  res.json(rows);
 });
 
 

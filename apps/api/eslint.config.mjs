@@ -1,9 +1,13 @@
 import { config } from "@repo/eslint-config/base";
 
-/** @type {import("eslint").Linter.Config} */
-export default {
-  ...config,
-  ignores: ["dist/**", "node_modules/**", ".prisma/**"],
-};
+const base = Array.isArray(config) ? config : [config];
+
+/** @type {import("eslint").Linter.Config[]} */
+export default [
+  ...base,
+  {
+    ignores: ["dist/**", "node_modules/**", ".prisma/**"],
+  },
+];
 
 

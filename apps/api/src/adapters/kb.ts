@@ -1,29 +1,22 @@
-import { query } from '../db.js';
+import { prisma } from '../db.js';
 import { getEmbedder } from './embedder.js';
 import { CandidateTopic, Snippet } from '../types.js';
 import { trace } from '../util/trace.js';
 import { vectorLiteral } from '../util/vector.js';
 import { env } from '../env.js';
+import Anthropic from '@anthropic-ai/sdk';
 
 export async function extractTopics(text: string, max = 8): Promise<CandidateTopic[]> {
   if (!env.EMBED_MOCK && env.ANTHROPIC_API_KEY) {
+    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
     const prompt = `Extract up to ${max} topics from the text. Respond ONLY as a JSON array of objects {"name":string,"confidence":number in [0,1]}. Text: ${text.slice(0, 4000)}`;
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: env.ANTHROPIC_TOPIC_MODEL,
-        max_tokens: 256,
-        temperature: 0.2,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const msg: any = await resp.json();
-    const raw = msg?.content?.[0]?.text ?? '';
+    const msg = await client.messages.create({
+      model: env.ANTHROPIC_TOPIC_MODEL!,
+      max_tokens: 256,
+      temperature: 0.2,
+      messages: [{ role: 'user', content: prompt }]
+    } as any);
+    const raw = (msg as any)?.content?.[0]?.text ?? '';
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
@@ -48,15 +41,14 @@ export async function search(queryText: string, topK: number): Promise<{ snippet
   const msEmbed = Date.now() - start;
   await trace({ tool: 'kb.embed', ok: true, ms: msEmbed, detailsRedacted: { model: embedder.model(), dim: qv.length } });
 
-  const rows = await query<{ doc_id: string; title: string; text_snippet: string }>(
-    `select c.doc_id, d.title, c.text_snippet
-     from chunks c
-     join docs d on d.id = c.doc_id
-     order by (c.embedding <#> (($1::text)::vector)) asc
-     limit $2`,
-    [vectorLiteral(qv), topK]
-  );
-  const snippets: Snippet[] = rows.rows.map(r => ({ text: r.text_snippet.slice(0, 200), source: r.title, docId: r.doc_id }));
+  const rows = await prisma.$queryRaw<Array<{ doc_id: string; title: string; text_snippet: string }>>`
+    select c.doc_id, d.title, c.text_snippet
+    from chunks c
+    join docs d on d.id = c.doc_id
+    order by (c.embedding <#> ( ${vectorLiteral(qv)}::vector )) asc
+    limit ${topK}
+  `;
+  const snippets: Snippet[] = rows.map(r => ({ text: r.text_snippet.slice(0, 200), source: r.title, docId: r.doc_id }));
   const candidateTopics = await extractTopics(queryText + ' ' + snippets.map(s => s.text).join(' '), 8);
   return { snippets, candidateTopics };
 }
