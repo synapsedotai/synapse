@@ -1,0 +1,46 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { search as kbSearch } from '../adapters/kb.js';
+import { query } from '../db.js';
+import { trace } from '../util/trace.js';
+
+const schema = z.object({
+  query: z.string().min(1),
+  topK: z.number().int().min(1).max(20).default(5)
+});
+
+export const searchRouter = Router();
+
+searchRouter.post('/api/search', async (req, res) => {
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.issues.map(i => ({ field: i.path.join('.'), message: i.message })) });
+  }
+  const { query: q, topK } = parsed.data;
+  try {
+    const plan = ['kb.search', 'experts.rank'];
+    const { snippets, candidateTopics } = await kbSearch(q, topK);
+    const topicNames = candidateTopics.map(t => t.name);
+    let experts: any[] = [];
+    if (topicNames.length) {
+      const rows = await query<{ employee_id: string; name: string; score: number; freshness_days: number }>(
+        `select e.employee_id, emp.name, e.score, e.freshness_days
+         from expertise_scores e
+         join employees emp on emp.id = e.employee_id
+         join topics t on t.id = e.topic_id
+         where t.name = any($1::text[])
+         order by (e.score * (1.0 / (1 + e.freshness_days/30.0))) desc
+         limit 10`,
+        [topicNames]
+      );
+      experts = rows.rows.map(r => ({ employeeId: r.employee_id, name: r.name, score: Number(r.score), freshnessDays: Number(r.freshness_days) }));
+    }
+    await trace({ tool: 'search', ok: true, ms: 0, detailsRedacted: { q: q.slice(0, 60), topK } });
+    res.json({ plan, snippets, candidateTopics, experts });
+  } catch (e: any) {
+    await trace({ tool: 'search', ok: false, ms: 0, detailsRedacted: { error: String(e?.message ?? e) } });
+    res.status(500).json({ error: 'search_failed' });
+  }
+});
+
+
