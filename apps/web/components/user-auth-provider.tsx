@@ -9,7 +9,7 @@ interface UserAuthProviderProps {
   children: React.ReactNode;
 }
 
-const userRoutes = ['/dashboard', '/interview', '/connect', '/meetings'];
+const userRoutes = ['/dashboard', '/interview', '/interview/chat', '/interview/voice', '/interview/video', '/connect', '/meetings'];
 
 export function UserAuthProvider({ children }: UserAuthProviderProps) {
   const router = useRouter();

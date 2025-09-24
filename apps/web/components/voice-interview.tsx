@@ -53,14 +53,27 @@ Never accept vague answers. "Worked on the API" → "Which endpoints? What was t
     }
   });
 
-  // Check microphone permission
+  // Check microphone permission more reliably
   useEffect(() => {
     const checkMicPermission = async () => {
       try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        setMicPermission('granted');
+        // Check if navigator.permissions is available
+        if ('permissions' in navigator) {
+          const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          if (permission.state === 'granted') {
+            setMicPermission('granted');
+          } else if (permission.state === 'denied') {
+            setMicPermission('denied');
+          } else {
+            setMicPermission('pending');
+          }
+        } else {
+          // Fallback: assume permission is needed
+          setMicPermission('pending');
+        }
       } catch (error) {
-        setMicPermission('denied');
+        console.log('Permission check failed, assuming pending:', error);
+        setMicPermission('pending');
       }
     };
 
@@ -69,11 +82,14 @@ Never accept vague answers. "Worked on the API" → "Which endpoints? What was t
 
   const startVoiceInterview = async () => {
     try {
-      // Request mic permission if not granted
-      if (micPermission !== 'granted') {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        setMicPermission('granted');
-      }
+      // Always request mic permission explicitly before starting
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // If we get here, permission was granted
+      setMicPermission('granted');
+      
+      // Clean up the test stream
+      stream.getTracks().forEach(track => track.stop());
 
       // Start the conversation - you'll need to provide your agent ID
       await conversation.startSession({
