@@ -1,7 +1,15 @@
 import { Pool } from 'pg';
 import { env, getDatabaseUrl } from './env.js';
+import { PrismaClient } from '@prisma/client';
 
-export const pool = new Pool({ connectionString: getDatabaseUrl() });
+const connectionString = getDatabaseUrl();
+const useSSL = /supabase\.co/.test(connectionString) || process.env.SUPABASE_SSL === '1' || process.env.PGSSLMODE === 'require';
+export const pool = new Pool({
+  connectionString,
+  ssl: useSSL ? { rejectUnauthorized: false } : undefined,
+});
+
+export const prisma = new PrismaClient();
 
 export async function query<T = any>(text: string, params?: any[]): Promise<{ rows: T[] }> {
   const start = Date.now();

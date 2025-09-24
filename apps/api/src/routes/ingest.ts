@@ -4,6 +4,7 @@ import { query, withTransaction } from '../db.js';
 import { chunk } from '../adapters/chunker.js';
 import { getEmbedder } from '../adapters/embedder.js';
 import { trace, redact } from '../util/trace.js';
+import { vectorLiteral } from '../util/vector.js';
 
 const bodySchema = z.object({
   employeeId: z.string().uuid(),
@@ -48,8 +49,8 @@ ingestRouter.post('/api/ingest', async (req, res) => {
         const v = await embedder.embed(p);
         await client.query(
           `insert into chunks(id, doc_id, text_snippet, embedding)
-           values (gen_random_uuid(), $1, $2, $3)`,
-          [docId, p.slice(0, 400), v]
+           values (gen_random_uuid(), $1, $2, (($3::text)::vector))`,
+          [docId, p.slice(0, 400), vectorLiteral(v)]
         );
         count++;
       }

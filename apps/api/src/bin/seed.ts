@@ -3,6 +3,8 @@ import path from 'path';
 import { pool, query } from '../db.js';
 import { fileURLToPath } from 'url';
 import { ingestFile } from './seed_ingest.js';
+import { extractTopics } from '../adapters/kb.js';
+import { prisma } from '../db.js';
 
 async function seedEmployees(csvPath: string) {
   const csv = fs.readFileSync(csvPath, 'utf8').trim().split(/\r?\n/);
@@ -35,6 +37,20 @@ async function main() {
     const employeeId = owners[ownerIdx % owners.length].id;
     ownerIdx++;
     await ingestFile({ employeeId, title, text, visibility: 'org' });
+    // derive initial expertise from doc content
+    const topics = await extractTopics(text, 3);
+    for (const t of topics) {
+      const topic = await prisma.topics.upsert({
+        where: { name: t.name },
+        create: { name: t.name },
+        update: { name: t.name }
+      });
+      await prisma.expertise_scores.upsert({
+        where: { employee_id_topic_id: { employee_id: employeeId, topic_id: topic.id } },
+        create: { employee_id: employeeId, topic_id: topic.id, score: t.confidence, freshness_days: 0 },
+        update: { score: { set: t.confidence }, freshness_days: { set: 0 } }
+      } as any);
+    }
   }
   await pool.end();
   console.log('seeded');

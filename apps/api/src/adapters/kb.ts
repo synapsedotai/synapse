@@ -4,7 +4,7 @@ import { CandidateTopic, Snippet } from '../types.js';
 import { trace } from '../util/trace.js';
 import { vectorLiteral } from '../util/vector.js';
 
-async function extractTopics(text: string, max = 8): Promise<CandidateTopic[]> {
+export async function extractTopics(text: string, max = 8): Promise<CandidateTopic[]> {
   // Lightweight heuristic for demo; replace with Claude JSON tool in future
   const words = (text.toLowerCase().match(/[a-z][a-z0-9\-]{3,}/g) ?? [])
     .filter(w => !['that','this','with','from','into','http','https','www','team','org','your','have','been','when','what','will','about','also','like','just','repo','branch','master','main','staging','deploy','deploys','update'].includes(w))

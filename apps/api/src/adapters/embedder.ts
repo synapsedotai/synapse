@@ -35,6 +35,13 @@ export class MockEmbedder implements Embedder {
     const v = Array.from({ length: this.dimVal }, () => rnd());
     const ms = Date.now() - start;
     await trace({ tool: 'embed.mock', ok: true, ms, detailsRedacted: { dim: this.dimVal } });
+    try {
+      // Persist dim for healthz and ensure DB column has matching dim when empty
+      if (!fs.existsSync(paths.embedDimFile)) {
+        fs.writeFileSync(paths.embedDimFile, String(this.dimVal), 'utf8');
+      }
+      await setVectorDimIfEmpty(this.dimVal);
+    } catch {}
     return v;
   }
   async getDim(): Promise<number> { return this.dimVal; }

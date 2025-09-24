@@ -10,6 +10,7 @@
     "dev": "bunx tsx watch src/server.ts",
     "migrate": "bunx tsx src/bin/migrate.ts",
     "seed": "bunx tsx src/bin/seed.ts",
+    "prisma:push": "bunx prisma db push --schema prisma/schema.prisma",
     "lint": "bunx eslint .",
     "typecheck": "bunx tsc --noEmit",
     "test": "bunx vitest run"
@@ -21,13 +22,15 @@
     "express-rate-limit": "^7.4.0",
     "pg": "^8.12.0",
     "pg-format": "^1.0.4",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "@prisma/client": "^5.20.0"
   },
   "devDependencies": {
     "tsx": "^4.19.2",
     "vitest": "^2.1.3",
     "@types/express": "^4.17.21",
     "@types/pg": "^8.10.2",
-    "@types/pg-format": "^1.0.2"
+    "@types/pg-format": "^1.0.2",
+    "prisma": "^5.20.0"
   }
 }

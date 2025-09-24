@@ -1,6 +1,6 @@
 Synapse API
 
-Express + Postgres (Supabase) backend for expert finder and knowledge risk graph.
+Express + Postgres backend for expert finder and knowledge risk graph.
 
 Setup
 
@@ -10,7 +10,7 @@ Create `.env` in this directory:
 
 ```
 PORT=4000
-SUPABASE_DB_URL=postgresql://postgres:password@localhost:5432/postgres
+DATABASE_URL=postgresql://postgres:password@host:5432/postgres?sslmode=require
 ANTHROPIC_API_KEY=
 ANTHROPIC_EMBED_MODEL=claude-embed
 EMBED_MOCK=1
@@ -20,10 +20,13 @@ RETENTION_DAYS=90
 2) Install and run
 
 ```
-pnpm i
-pnpm -C apps/api migrate
-pnpm -C apps/api seed
-pnpm -C apps/api dev
+bun install
+# generate Prisma client
+yarn prisma db push || bunx prisma db push
+bunx prisma generate
+bun run migrate
+bun run seed
+bun run dev
 ```
 
 Endpoints

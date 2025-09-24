@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+model employees {
+  id         String   @id @db.Uuid
+  email      String   @unique
+  name       String
+  team       String?
+  role       String?
+  pay_band   Int?
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  docs             docs[]
+  expertise_scores expertise_scores[]
+
+  @@map("employees")
+}
+
+model topics {
+  id    BigInt @id @default(autoincrement())
+  name  String @unique
+
+  expertise_scores expertise_scores[]
+
+  @@map("topics")
+}
+
+model expertise_scores {
+  employee_id    String @db.Uuid
+  topic_id       BigInt
+  score          Float
+  freshness_days Int    @default(0)
+
+  employees employees @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  topics    topics    @relation(fields: [topic_id], references: [id], onDelete: Cascade)
+
+  @@id([employee_id, topic_id])
+  @@map("expertise_scores")
+}
+
+model docs {
+  id           String   @id @db.Uuid
+  employee_id  String?  @db.Uuid
+  title        String
+  source_url   String?
+  visibility   String?  @default("private")
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+
+  employees employees? @relation(fields: [employee_id], references: [id], onDelete: SetNull)
+  chunks    chunks[]
+
+  @@map("docs")
+}
+
+model chunks {
+  id           String  @id @db.Uuid
+  doc_id       String  @db.Uuid
+  text_snippet String
+  embedding    Unsupported("vector")
+
+  docs docs @relation(fields: [doc_id], references: [id], onDelete: Cascade)
+
+  @@map("chunks")
+}
+
+model audit_log {
+  id      BigInt   @id @default(autoincrement())
+  ts      DateTime @default(now()) @db.Timestamptz(6)
+  actor   String?
+  action  String?
+  subject String?
+  details Json?
+
+  @@map("audit_log")
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
