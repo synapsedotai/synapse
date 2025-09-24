@@ -19,26 +19,26 @@ export async function trace(input: TraceInput) {
   );
 }
 
-export function redact(obj: any): any {
-  if (obj == null) return obj;
+export function redact<T>(obj: T): T {
+  if (obj == null) return obj as T;
   if (typeof obj === 'string') {
     // redact emails and api keys
     let s = obj.replace(/([\w.-]+)@([\w.-]+)/g, '***@***');
     s = s.replace(/sk-[A-Za-z0-9_-]{10,}/g, 'sk-***');
-    return s;
+    return s as unknown as T;
   }
-  if (Array.isArray(obj)) return obj.map(redact);
+  if (Array.isArray(obj)) return obj.map(redact) as unknown as T;
   if (typeof obj === 'object') {
-    const out: any = {};
-    for (const [k, v] of Object.entries(obj)) {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
       if (/api|key|secret|token|email|embedding/i.test(k)) {
         out[k] = '***';
       } else {
         out[k] = redact(v);
       }
     }
-    return out;
+    return out as unknown as T;
   }
-  return obj;
+  return obj as T;
 }
 

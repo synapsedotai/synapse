@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { search as kbSearch } from '../adapters/kb.js';
 import { prisma } from '../db.js';
-import { Prisma } from '@prisma/client';
 import { trace } from '../util/trace.js';
 
 const schema = z.object({
@@ -24,24 +23,32 @@ searchRouter.post('/api/search', async (req, res) => {
     const topicNames = candidateTopics.map(t => t.name);
     let experts: any[] = [];
     if (topicNames.length) {
-      const rows = await prisma.$queryRaw<Array<{ employee_id: string; name: string; score: number; freshness_days: number }>>`
-        select e.employee_id, emp.name,
-               max(e.score) as score,
-               min(e.freshness_days) as freshness_days
-        from expertise_scores e
-        join employees emp on emp.id = e.employee_id
-        join topics t on t.id = e.topic_id
-        where t.name = any(array[${Prisma.join(topicNames)}])
-        group by e.employee_id, emp.name
-        order by (max(e.score) * (1.0 / (1 + min(e.freshness_days)/30.0))) desc
-        limit 10
-      `;
-      experts = rows.map(r => ({ employeeId: r.employee_id, name: r.name, score: Number(r.score), freshnessDays: Number(r.freshness_days) }));
+      const topicIds = await prisma.topics.findMany({
+        where: { name: { in: topicNames } },
+        select: { id: true },
+      });
+      const ids = topicIds.map(t => Number(t.id)).filter(n => Number.isFinite(n));
+      if (ids.length) {
+        const sql = `
+          select e.employee_id, emp.name,
+                 max(e.score) as score,
+                 min(e.freshness_days) as freshness_days
+          from expertise_scores e
+          join employees emp on emp.id = e.employee_id
+          where e.topic_id = any(array[${ids.join(',')}])
+          group by e.employee_id, emp.name
+          order by (max(e.score) * (1.0 / (1 + min(e.freshness_days)/30.0))) desc
+          limit 10`;
+        type ExpertRow = { employee_id: string; name: string; score: number; freshness_days: number };
+        const rows = await prisma.$queryRawUnsafe(sql);
+        const data = rows as unknown as ExpertRow[];
+        experts = data.map(r => ({ employeeId: r.employee_id, name: r.name, score: Number(r.score), freshnessDays: Number(r.freshness_days) }));
+      }
     }
     await trace({ tool: 'search', ok: true, ms: 0, detailsRedacted: { q: q.slice(0, 60), topK } });
     res.json({ plan, snippets, candidateTopics, experts });
-  } catch (e: any) {
-    await trace({ tool: 'search', ok: false, ms: 0, detailsRedacted: { error: String(e?.message ?? e) } });
+  } catch (e) {
+    await trace({ tool: 'search', ok: false, ms: 0, detailsRedacted: { error: e instanceof Error ? e.message : String(e) } });
     res.status(500).json({ error: 'search_failed' });
   }
 });

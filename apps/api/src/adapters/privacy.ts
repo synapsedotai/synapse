@@ -9,8 +9,8 @@ export async function exportForEmployee(employeeId: string) {
   return {
     topics: topics.rows,
     docs: docs.rows,
-    snippets: snippets.rows.map(r => ({ text: String(r.text_snippet).slice(0, 400), docId: r.doc_id }))
-  };
+    snippets: snippets.rows.map((r: any) => ({ text: String(r.text_snippet).slice(0, 400), docId: (r as { doc_id: string }).doc_id }))
+  } as { topics: unknown[]; docs: unknown[]; snippets: Array<{ text: string; docId: string }> };
 }
 
 export async function deleteForEmployee(employeeId: string) {

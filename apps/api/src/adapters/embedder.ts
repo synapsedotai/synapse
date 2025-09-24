@@ -42,43 +42,47 @@ export class MockEmbedder implements Embedder {
         fs.writeFileSync(paths.embedDimFile, String(this.dimVal), 'utf8');
       }
       await setVectorDimIfEmpty(this.dimVal);
-    } catch {}
+    } catch {
+      void 0;
+    }
     return v;
   }
   async getDim(): Promise<number> { return this.dimVal; }
   model(): string { return 'mock'; }
 }
 
-export class AnthropicEmbedder implements Embedder {
+export class VoyageEmbedder implements Embedder {
   private dimCached: number | null = null;
-  model(): string { return env.ANTHROPIC_EMBED_MODEL; }
+  model(): string { return env.VOYAGE_EMBED_MODEL; }
   async embed(text: string): Promise<number[]> {
     const start = Date.now();
-    const resp = await fetch('https://api.anthropic.com/v1/embeddings', {
+    const resp = await fetch('https://api.voyageai.com/v1/embeddings', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': env.ANTHROPIC_API_KEY ?? '',
-        'anthropic-version': '2023-06-01'
+        'Authorization': `Bearer ${env.VOYAGE_API_KEY ?? ''}`
       },
-      body: JSON.stringify({ model: env.ANTHROPIC_EMBED_MODEL, input: text })
+      body: JSON.stringify({ model: env.VOYAGE_EMBED_MODEL, input: [text], input_type: 'document' })
     });
     if (!resp.ok) {
       const body = await resp.text();
-      await trace({ tool: 'embed.anthropic', ok: false, ms: Date.now() - start, detailsRedacted: { status: resp.status, body: body.slice(0, 200) } });
+      await trace({ tool: 'embed.voyage', ok: false, ms: Date.now() - start, detailsRedacted: { status: resp.status, body: body.slice(0, 200) } });
       throw new Error(`Embedding failed: ${resp.status}`);
     }
-    const json: any = await resp.json();
-    const vector: number[] = json?.data?.[0]?.embedding ?? json?.embedding ?? [];
+    type VoyageEmbeddingResponse = { data: Array<{ embedding: number[] }> };
+    const json = (await resp.json()) as VoyageEmbeddingResponse;
+    const vector: number[] = json?.data?.[0]?.embedding ?? [];
     const dim = vector.length;
     if (!this.dimCached && dim > 0) {
       this.dimCached = dim;
       try {
         fs.writeFileSync(paths.embedDimFile, String(dim), 'utf8');
         await setVectorDimIfEmpty(dim);
-      } catch {}
+      } catch {
+        void 0;
+      }
     }
-    await trace({ tool: 'embed.anthropic', ok: true, ms: Date.now() - start, detailsRedacted: { dim } });
+    await trace({ tool: 'embed.voyage', ok: true, ms: Date.now() - start, detailsRedacted: { dim } });
     return vector;
   }
   async getDim(): Promise<number> {
@@ -98,7 +102,8 @@ export class AnthropicEmbedder implements Embedder {
 }
 
 export function getEmbedder(): Embedder {
-  if (env.EMBED_MOCK || !env.ANTHROPIC_API_KEY) return new MockEmbedder();
-  return new AnthropicEmbedder();
+  if (env.EMBED_MOCK) return new MockEmbedder();
+  if (env.VOYAGE_API_KEY) return new VoyageEmbedder();
+  return new MockEmbedder();
 }
 

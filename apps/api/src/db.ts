@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 import { env, getDatabaseUrl } from './env.js';
 import { PrismaClient } from '@prisma/client';
 
@@ -11,11 +11,11 @@ export const pool = new Pool({
 
 export const prisma = new PrismaClient();
 
-export async function query<T = any>(text: string, params?: any[]): Promise<{ rows: T[] }> {
+export async function query<T = unknown>(text: string, params?: unknown[]): Promise<{ rows: T[] }> {
   const start = Date.now();
   try {
-    const res = await pool.query(text, params);
-    return res as any;
+    const res = await pool.query(text as string, params as any[] | undefined);
+    return res as unknown as { rows: T[] };
   } finally {
     const ms = Date.now() - start;
     if (ms > 200) {
@@ -56,8 +56,8 @@ export async function setVectorDimIfEmpty(targetDim: number) {
   }
 }
 
-export async function withTransaction<T>(fn: (client: any) => Promise<T>): Promise<T> {
-  const client = await pool.connect();
+export async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client: PoolClient = await pool.connect();
   try {
     await client.query('BEGIN');
     const result = await fn(client);

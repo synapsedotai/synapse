@@ -59,8 +59,8 @@ ingestRouter.post('/api/ingest', async (req, res) => {
 
     await trace({ tool: 'ingest', ok: true, ms: 0, detailsRedacted: redact({ employeeId, title, url, visibility, chunks: out.chunkCount }) });
     res.json(out);
-  } catch (e: any) {
-    await trace({ tool: 'ingest', ok: false, ms: 0, detailsRedacted: { error: String(e?.message ?? e) } });
+  } catch (e) {
+    await trace({ tool: 'ingest', ok: false, ms: 0, detailsRedacted: { error: e instanceof Error ? e.message : String(e) } });
     res.status(500).json({ error: 'ingest_failed' });
   }
 });

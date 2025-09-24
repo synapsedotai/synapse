@@ -7,7 +7,6 @@
     "node": ">=20"
   },
   "scripts": {
-    "predev": "bunx prisma generate --schema prisma/schema.prisma",
     "dev": "bunx tsx watch src/server.ts",
     "migrate": "bunx tsx src/bin/migrate.ts",
     "seed": "bunx tsx src/bin/seed.ts",

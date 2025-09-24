@@ -15,12 +15,12 @@ export async function extractTopics(text: string, max = 8): Promise<CandidateTop
       max_tokens: 256,
       temperature: 0.2,
       messages: [{ role: 'user', content: prompt }]
-    } as any);
-    const raw = (msg as any)?.content?.[0]?.text ?? '';
+    });
+    const raw = (msg as unknown as { content?: Array<{ text?: string }> })?.content?.[0]?.text ?? '';
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed.slice(0, max).map((t: any) => ({ name: String(t.name), confidence: Math.max(0, Math.min(1, Number(t.confidence) || 0.5)) }));
+        return parsed.slice(0, max).map((t: { name: string; confidence?: number }) => ({ name: String(t.name), confidence: Math.max(0, Math.min(1, Number(t.confidence) || 0.5)) }));
       }
     } catch {}
   }

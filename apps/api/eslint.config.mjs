@@ -6,7 +6,16 @@ const base = Array.isArray(config) ? config : [config];
 export default [
   ...base,
   {
-    ignores: ["dist/**", "node_modules/**", ".prisma/**"],
+    ignores: [
+      "**/node_modules/**",
+      "**/.prisma/**",
+      "**/.turbo/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/coverage/**",
+      "src/generated/**",
+      "src/generated/prisma/**",
+    ],
   },
 ];
 

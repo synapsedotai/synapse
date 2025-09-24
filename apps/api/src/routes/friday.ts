@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { query, withTransaction } from '../db.js';
+import { withTransaction } from '../db.js';
 import { trace } from '../util/trace.js';
 import { CandidateTopic } from '../types.js';
 import { search as kbSearch } from '../adapters/kb.js';
@@ -46,8 +46,8 @@ fridayRouter.post('/api/friday', async (req, res) => {
     });
     await trace({ tool: 'friday', ok: true, ms: 0, detailsRedacted: { employeeId: '***', count: updated.length } });
     res.json({ topicsUpdated: updated });
-  } catch (e: any) {
-    await trace({ tool: 'friday', ok: false, ms: 0, detailsRedacted: { error: String(e?.message ?? e) } });
+  } catch (e) {
+    await trace({ tool: 'friday', ok: false, ms: 0, detailsRedacted: { error: e instanceof Error ? e.message : String(e) } });
     res.status(500).json({ error: 'friday_failed' });
   }
 });
