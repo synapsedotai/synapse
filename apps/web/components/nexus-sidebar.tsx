@@ -9,6 +9,7 @@ import {
   SparklesIcon,
   ViewfinderCircleIcon,
   ArrowRightStartOnRectangleIcon,
+  BoltIcon,
 } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -47,7 +48,7 @@ export function NexusSidebar({ className, onNavigate }: NexusSidebarProps) {
   return (
     <div className={cn("flex h-full w-full flex-col bg-synapse-beige", className)}>
       {/* Logo with Nexus Badge */}
-      <div className="p-4">
+      <div className="p-4 pt-6">
         <Link href="/nexus" className="flex flex-col items-center justify-center" onClick={handleNavClick}>
           <Image
             src="/synapse-logo.png"
@@ -57,8 +58,9 @@ export function NexusSidebar({ className, onNavigate }: NexusSidebarProps) {
             className="object-contain"
             priority
           />
-          <div className="mt-1 px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
-            NEXUS
+          <div className="mt-2 px-3 py-1 bg-purple-100 text-purple-800 text-xs font-bold rounded-full flex items-center gap-2">
+            <BoltIcon className="w-4 h-4" />
+            <span className="tracking-widest">N E X U S</span>
           </div>
         </Link>
       </div>

@@ -9,8 +9,10 @@ import {
   ArrowsRightLeftIcon,
   ChartBarIcon,
   ArrowRightStartOnRectangleIcon,
+  CalendarDaysIcon,
 } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -31,7 +33,11 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
     { name: "Dashboard", href: "/dashboard", icon: ChartBarIcon },
     { name: "Interview", href: "/interview", icon: ChatBubbleLeftRightIcon },
     { name: "Connect", href: "/connect", icon: ArrowsRightLeftIcon },
+    { name: "Meetings", href: "/meetings", icon: CalendarDaysIcon },
   ];
+
+  // Mock weekly interview completion status
+  const hasCompletedInterview = false; // In real app, this would check completion state
 
   const handleNavClick = () => {
     if (onNavigate) {
@@ -88,6 +94,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
       <nav className="flex-1 space-y-1 p-4">
         {navigation.map((item) => {
           const isActive = pathname === item.href;
+          const showPending = item.name === "Interview" && !hasCompletedInterview;
           
           return (
             <Link key={item.name} href={item.href} onClick={handleNavClick}>
@@ -102,6 +109,11 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
                   <item.icon className="h-5 w-5" />
                   {item.name}
                 </div>
+                {showPending && (
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                    Pending
+                  </Badge>
+                )}
               </Button>
             </Link>
           );

@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { nexusLoginAtom, mockAdminLogin } from "@/lib/atoms";
-import { ShieldCheckIcon } from "@heroicons/react/24/solid";
+import { ShieldCheckIcon, BoltIcon } from "@heroicons/react/24/solid";
 
 export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -55,9 +55,9 @@ export default function AdminLoginPage() {
 
           {/* Nexus Badge */}
           <div className="flex justify-center">
-            <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 px-3 py-1 text-sm font-medium">
-              <ShieldCheckIcon className="w-4 h-4 mr-1" />
-              Nexus Portal
+            <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 px-4 py-2 text-sm font-bold">
+              <BoltIcon className="w-5 h-5 mr-3" />
+              <span className="tracking-widest">N E X U S  Portal</span>
             </Badge>
           </div>
 

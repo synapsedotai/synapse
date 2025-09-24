@@ -12,6 +12,7 @@ import {
   DialogOverlay,
   DialogPortal,
 } from "@/components/ui/dialog";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 
 interface ProfileData {
   id: string;
@@ -26,8 +27,11 @@ interface ProfileData {
   startDate: string;
   location: string;
   reports: number;
-  skills: string[];
-  performance: 'Exceeds' | 'Meets' | 'Below';
+  knowledgeDomains: string[];
+  impactRating: number;
+  expertMeetings: number;
+  retentionRisk: 'Low' | 'Medium' | 'High' | 'Critical';
+  riskFactors: string[];
 }
 
 interface ProfileCardProps {
@@ -39,11 +43,16 @@ interface ProfileCardProps {
 export function ProfileCard({ profile, open, onClose }: ProfileCardProps) {
   if (!profile) return null;
 
-  const performanceColor = {
-    'Exceeds': 'bg-green-100 text-green-800',
-    'Meets': 'bg-blue-100 text-blue-800', 
-    'Below': 'bg-red-100 text-red-800'
-  }[profile.performance];
+  const riskColor = {
+    'Low': 'bg-green-100 text-green-800',
+    'Medium': 'bg-yellow-100 text-yellow-800',
+    'High': 'bg-orange-100 text-orange-800',
+    'Critical': 'bg-red-100 text-red-800'
+  }[profile.retentionRisk];
+
+  const impactColor = profile.impactRating >= 80 ? 'bg-green-100 text-green-800' :
+                     profile.impactRating >= 60 ? 'bg-blue-100 text-blue-800' :
+                     'bg-gray-100 text-gray-800';
 
   const levelColors = {
     'CEO': 'bg-purple-100 text-purple-800',
@@ -129,27 +138,56 @@ export function ProfileCard({ profile, open, onClose }: ProfileCardProps) {
 
           <Separator />
 
-          {/* Performance */}
+          {/* Impact & Expert Status */}
           <div>
-            <h3 className="font-semibold mb-2">Performance</h3>
-            <Badge className={performanceColor}>
-              {profile.performance} Expectations
-            </Badge>
+            <h3 className="font-semibold mb-2">Impact Rating</h3>
+            <div className="flex items-center gap-3 mb-2">
+              <Badge className={impactColor}>
+                {profile.impactRating}/100 Impact Score
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                {profile.expertMeetings} expert meetings conducted
+              </span>
+            </div>
+            <p className="text-xs text-gray-600">
+              Based on knowledge sharing frequency and colleague feedback
+            </p>
           </div>
 
           <Separator />
 
-          {/* Skills */}
+          {/* Knowledge Domains */}
           <div>
-            <h3 className="font-semibold mb-2">Key Skills</h3>
+            <h3 className="font-semibold mb-2">Knowledge Domains</h3>
             <div className="flex flex-wrap gap-1">
-              {profile.skills.map((skill, index) => (
+              {profile.knowledgeDomains.map((domain, index) => (
                 <Badge key={index} variant="secondary" className="text-xs">
-                  {skill}
+                  {domain}
                 </Badge>
               ))}
             </div>
           </div>
+
+          {/* HR Alert */}
+          {profile.retentionRisk !== 'Low' && (
+            <>
+              <Separator />
+              <div>
+                <h3 className="font-semibold mb-2 flex items-center gap-2">
+                  <ExclamationTriangleIcon className="w-4 h-4 text-orange-600" />
+                  Retention Alert
+                </h3>
+                <Badge className={`${riskColor} mb-2`}>
+                  {profile.retentionRisk} Risk
+                </Badge>
+                <div className="text-xs text-gray-600 space-y-1">
+                  {profile.riskFactors.map((factor, index) => (
+                    <div key={index}>• {factor}</div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

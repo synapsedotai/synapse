@@ -33,8 +33,11 @@ interface GraphNode {
     startDate: string;
     location: string;
     reports: number;
-    skills: string[];
-    performance: 'Exceeds' | 'Meets' | 'Below';
+    knowledgeDomains: string[];
+    impactRating: number;
+    expertMeetings: number;
+    retentionRisk: 'Low' | 'Medium' | 'High' | 'Critical';
+    riskFactors: string[];
     avatar?: string;
   };
 }
@@ -67,21 +70,38 @@ const generateSampleData = (): GraphData => {
     return ranges[level] || '$65K-85K';
   };
   
-  const generateSkills = (level: number) => {
-    const skillSets = [
-      ['Leadership', 'Strategy', 'Vision', 'Board Management'],
-      ['Management', 'Strategy', 'P&L', 'Team Building'],
-      ['Leadership', 'Operations', 'Budget', 'Process'],
-      ['Team Lead', 'Project Mgmt', 'Mentoring', 'Planning'],
-      ['Technical', 'Problem Solving', 'Collaboration', 'Innovation'],
-      ['Development', 'Analysis', 'Communication', 'Learning'],
-      ['Fundamentals', 'Eagerness', 'Adaptability', 'Growth']
+  const generateKnowledgeDomains = (level: number) => {
+    const domainSets = [
+      ['Strategic Planning', 'Board Relations', 'M&A', 'Investor Relations'],
+      ['Department Strategy', 'Budget Planning', 'Team Scaling', 'Process Design'],
+      ['Team Leadership', 'Resource Planning', 'Cross-functional Coordination', 'Performance Management'],
+      ['Project Management', 'Technical Leadership', 'Mentoring', 'Process Optimization'],
+      ['System Architecture', 'Technical Implementation', 'Code Review', 'Best Practices'],
+      ['Feature Development', 'Testing', 'Documentation', 'Collaboration'],
+      ['Learning', 'Implementation', 'Support', 'Growth']
     ];
-    return skillSets[level] || skillSets[6];
+    return domainSets[level] || domainSets[6];
+  };
+  
+  const generateRetentionRisk = (level: number, meetings: number) => {
+    // Higher level + more meetings = higher retention risk if other factors present
+    if (level <= 2 && meetings > 40) return Math.random() > 0.7 ? 'High' : 'Medium';
+    if (meetings > 60) return Math.random() > 0.8 ? 'Critical' : 'High';
+    if (meetings > 30) return Math.random() > 0.6 ? 'Medium' : 'Low';
+    return 'Low';
+  };
+  
+  const generateRiskFactors = (risk: string, meetings: number) => {
+    const factors = [];
+    if (meetings > 40) factors.push(`High expertise (${meetings} expert meetings)`);
+    if (Math.random() > 0.6) factors.push('Below market compensation (Glassdoor data)');
+    if (Math.random() > 0.8) factors.push('Retirement eligible (60+ years)');
+    if (Math.random() > 0.7) factors.push('High external recruiting interest');
+    if (Math.random() > 0.5) factors.push('Key knowledge holder for legacy systems');
+    return factors.slice(0, 2 + Math.floor(Math.random() * 2));
   };
   
   const locations = ['San Francisco', 'New York', 'London', 'Remote', 'Austin', 'Seattle'];
-  const performances: ('Exceeds' | 'Meets' | 'Below')[] = ['Exceeds', 'Meets', 'Below'];
   const departments = ['Engineering', 'Product', 'Design', 'Marketing', 'Sales', 'Operations', 'Finance', 'HR'];
   const levels = ['CEO', 'C-Suite', 'Director', 'Senior Manager', 'Team Lead', 'Senior IC', 'Mid IC', 'Junior IC'];
   
@@ -101,8 +121,11 @@ const generateSampleData = (): GraphData => {
       startDate: 'Jan 2019',
       location: 'San Francisco',
       reports: 4,
-      skills: generateSkills(0),
-      performance: 'Exceeds',
+      knowledgeDomains: generateKnowledgeDomains(0),
+      impactRating: 95,
+      expertMeetings: 12,
+      retentionRisk: 'Low',
+      riskFactors: [],
       avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=sarah-chen`
     }
   });
@@ -133,8 +156,11 @@ const generateSampleData = (): GraphData => {
         startDate: ['Mar 2020', 'Jun 2019', 'Sep 2020', 'Jan 2021'][Math.floor(Math.random() * 4)],
         location: locations[Math.floor(Math.random() * locations.length)],
         reports: 3 + Math.floor(Math.random() * 4),
-        skills: generateSkills(1),
-        performance: performances[Math.floor(Math.random() * 2)], // Mostly Exceeds/Meets
+        knowledgeDomains: generateKnowledgeDomains(1),
+        impactRating: 85 + Math.floor(Math.random() * 15),
+        expertMeetings: 8 + Math.floor(Math.random() * 12),
+        retentionRisk: generateRetentionRisk(1, 8 + Math.floor(Math.random() * 12)),
+        riskFactors: generateRiskFactors('Medium', 8 + Math.floor(Math.random() * 12)),
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${exec.name.replace(' ', '-')}`
       }
     });
@@ -176,8 +202,11 @@ const generateSampleData = (): GraphData => {
         startDate: ['2020', '2021', '2022', '2023'][Math.floor(Math.random() * 4)],
         location: locations[Math.floor(Math.random() * locations.length)],
         reports: 2 + Math.floor(Math.random() * 4),
-        skills: generateSkills(2),
-        performance: performances[Math.floor(Math.random() * performances.length)],
+        knowledgeDomains: generateKnowledgeDomains(2),
+        impactRating: 70 + Math.floor(Math.random() * 25),
+        expertMeetings: 15 + Math.floor(Math.random() * 35),
+        retentionRisk: generateRetentionRisk(2, 15 + Math.floor(Math.random() * 35)),
+        riskFactors: generateRiskFactors('Medium', 15 + Math.floor(Math.random() * 35)),
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName.replace(' ', '-')}`
       }
     });
@@ -216,8 +245,11 @@ const generateSampleData = (): GraphData => {
         startDate: ['2021', '2022', '2023', '2024'][Math.floor(Math.random() * 4)],
         location: locations[Math.floor(Math.random() * locations.length)],
         reports: 2 + Math.floor(Math.random() * 3),
-        skills: generateSkills(3),
-        performance: performances[Math.floor(Math.random() * performances.length)],
+        knowledgeDomains: generateKnowledgeDomains(3),
+        impactRating: 60 + Math.floor(Math.random() * 30),
+        expertMeetings: 8 + Math.floor(Math.random() * 25),
+        retentionRisk: generateRetentionRisk(3, 8 + Math.floor(Math.random() * 25)),
+        riskFactors: [],
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${fullName.replace(' ', '-')}`
       }
     });
@@ -265,8 +297,11 @@ const generateSampleData = (): GraphData => {
           startDate: ['2022', '2023', '2024'][Math.floor(Math.random() * 3)],
           location: locations[Math.floor(Math.random() * locations.length)],
           reports: levelData.group < 4 ? Math.floor(Math.random() * 3) : 0,
-          skills: generateSkills(levelData.group),
-          performance: performances[Math.floor(Math.random() * performances.length)],
+          knowledgeDomains: generateKnowledgeDomains(levelData.group),
+          impactRating: 40 + Math.floor(Math.random() * 50),
+          expertMeetings: Math.floor(Math.random() * (8 - levelData.group) * 10),
+          retentionRisk: 'Low',
+          riskFactors: [],
           avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${name.replace(' ', '-')}`
         }
       });
@@ -367,9 +402,9 @@ export function InsightsGraph() {
       node.fx = undefined; // Allow X movement
       node.fz = undefined; // Allow Z movement
       
-      // Set initial X and Z spread
-      node.x = (Math.random() - 0.5) * 200;
-      node.z = (Math.random() - 0.5) * 200;
+      // Shift the spread to the left to center it better in viewport
+      node.x = (Math.random() - 0.5) * 150 - 100; // Shift left by 100 units
+      node.z = (Math.random() - 0.5) * 150; // Keep Z centered
     });
     
     // Create the 3D force graph - keep it simple!
@@ -457,6 +492,11 @@ export function InsightsGraph() {
         controls.rotateSpeed = 0.5;
         controls.panSpeed = 0.8;
         controls.zoomSpeed = 0.6;
+        
+        // Set default camera position to center view on the shifted graph
+        if (controls.target && controls.target.set) {
+          controls.target.set(-100, 0, 0); // Center target on the shifted graph
+        }
       }
     }, 100);
 
