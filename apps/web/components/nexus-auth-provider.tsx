@@ -9,7 +9,7 @@ interface NexusAuthProviderProps {
   children: React.ReactNode;
 }
 
-const nexusRoutes = ['/nexus/dashboard', '/nexus/insights'];
+const nexusRoutes = ['/nexus/dashboard', '/nexus/overview', '/nexus/insights'];
 
 export function NexusAuthProvider({ children }: NexusAuthProviderProps) {
   const router = useRouter();

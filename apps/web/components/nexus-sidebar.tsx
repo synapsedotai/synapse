@@ -7,6 +7,7 @@ import { useAtom } from "jotai";
 import {
   ChartBarIcon,
   SparklesIcon,
+  ViewfinderCircleIcon,
   ArrowRightStartOnRectangleIcon,
 } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ export function NexusSidebar({ className, onNavigate }: NexusSidebarProps) {
 
   const navigation = [
     { name: "Dashboard", href: "/nexus/dashboard", icon: ChartBarIcon },
+    { name: "Overview", href: "/nexus/overview", icon: ViewfinderCircleIcon },
     { name: "Insights", href: "/nexus/insights", icon: SparklesIcon },
   ];
 
