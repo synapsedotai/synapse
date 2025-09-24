@@ -24,12 +24,15 @@ searchRouter.post('/api/search', async (req, res) => {
     let experts: any[] = [];
     if (topicNames.length) {
       const rows = await query<{ employee_id: string; name: string; score: number; freshness_days: number }>(
-        `select e.employee_id, emp.name, e.score, e.freshness_days
+        `select e.employee_id, emp.name,
+                max(e.score) as score,
+                min(e.freshness_days) as freshness_days
          from expertise_scores e
          join employees emp on emp.id = e.employee_id
          join topics t on t.id = e.topic_id
          where t.name = any($1::text[])
-         order by (e.score * (1.0 / (1 + e.freshness_days/30.0))) desc
+         group by e.employee_id, emp.name
+         order by (max(e.score) * (1.0 / (1 + min(e.freshness_days)/30.0))) desc
          limit 10`,
         [topicNames]
       );
