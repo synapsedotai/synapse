@@ -10,6 +10,7 @@ export type Env = {
   SUPABASE_DB_URL?: string;
   ANTHROPIC_API_KEY?: string;
   ANTHROPIC_EMBED_MODEL: string;
+  ANTHROPIC_TOPIC_MODEL?: string;
   EMBED_MOCK: boolean;
   RETENTION_DAYS: number;
 };
@@ -32,6 +33,7 @@ export const env: Env = {
   SUPABASE_DB_URL: process.env.SUPABASE_DB_URL,
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
   ANTHROPIC_EMBED_MODEL: process.env.ANTHROPIC_EMBED_MODEL ?? 'claude-embed',
+  ANTHROPIC_TOPIC_MODEL: process.env.ANTHROPIC_TOPIC_MODEL ?? 'claude-3-5-sonnet-latest',
   EMBED_MOCK: parseBoolean(process.env.EMBED_MOCK, false),
   RETENTION_DAYS: Number(process.env.RETENTION_DAYS ?? 90),
 };

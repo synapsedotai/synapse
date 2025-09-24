@@ -7,23 +7,26 @@
     "node": ">=20"
   },
   "scripts": {
+    "predev": "bunx prisma generate --schema prisma/schema.prisma",
     "dev": "bunx tsx watch src/server.ts",
     "migrate": "bunx tsx src/bin/migrate.ts",
     "seed": "bunx tsx src/bin/seed.ts",
     "prisma:push": "bunx prisma db push --schema prisma/schema.prisma",
     "lint": "bunx eslint .",
+    "lint:fix": "bunx eslint . --fix",
     "typecheck": "bunx tsc --noEmit",
     "test": "bunx vitest run"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.63.1",
+    "@prisma/client": "^5.20.0",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "zod": "^3.23.8",
-    "helmet": "^7.1.0",
     "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
     "pg": "^8.12.0",
     "pg-format": "^1.0.4",
-    "dotenv": "^16.4.5",
-    "@prisma/client": "^5.20.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "tsx": "^4.19.2",

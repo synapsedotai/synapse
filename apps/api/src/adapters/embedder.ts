@@ -2,6 +2,7 @@ import fs from 'fs';
 import { env, paths } from '../env.js';
 import { setVectorDimIfEmpty } from '../db.js';
 import { trace } from '../util/trace.js';
+// Using HTTP for embeddings to avoid SDK version mismatches
 
 export interface Embedder {
   embed(text: string): Promise<number[]>;

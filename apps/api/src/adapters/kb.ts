@@ -3,9 +3,35 @@ import { getEmbedder } from './embedder.js';
 import { CandidateTopic, Snippet } from '../types.js';
 import { trace } from '../util/trace.js';
 import { vectorLiteral } from '../util/vector.js';
+import { env } from '../env.js';
 
 export async function extractTopics(text: string, max = 8): Promise<CandidateTopic[]> {
-  // Lightweight heuristic for demo; replace with Claude JSON tool in future
+  if (!env.EMBED_MOCK && env.ANTHROPIC_API_KEY) {
+    const prompt = `Extract up to ${max} topics from the text. Respond ONLY as a JSON array of objects {"name":string,"confidence":number in [0,1]}. Text: ${text.slice(0, 4000)}`;
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: env.ANTHROPIC_TOPIC_MODEL,
+        max_tokens: 256,
+        temperature: 0.2,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const msg: any = await resp.json();
+    const raw = msg?.content?.[0]?.text ?? '';
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.slice(0, max).map((t: any) => ({ name: String(t.name), confidence: Math.max(0, Math.min(1, Number(t.confidence) || 0.5)) }));
+      }
+    } catch {}
+  }
+  // fallback heuristic
   const words = (text.toLowerCase().match(/[a-z][a-z0-9\-]{3,}/g) ?? [])
     .filter(w => !['that','this','with','from','into','http','https','www','team','org','your','have','been','when','what','will','about','also','like','just','repo','branch','master','main','staging','deploy','deploys','update'].includes(w))
     .slice(0, 100);
