@@ -2,11 +2,11 @@
   "name": "synapse",
   "private": true,
   "scripts": {
-    "dev": "turbo run dev --filter=@synapse/api",
-    "migrate": "turbo run migrate --filter=@synapse/api",
-    "seed": "turbo run seed --filter=@synapse/api",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
+    "dev": "bunx turbo run dev",
+    "migrate": "bunx turbo run migrate",
+    "seed": "bunx turbo run seed",
+    "lint": "bunx turbo run lint",
+    "typecheck": "bunx turbo run typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
