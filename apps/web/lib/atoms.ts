@@ -73,8 +73,8 @@ export const mockGoogleLogin = (): Promise<GoogleOAuthResponse> => {
     setTimeout(() => {
       resolve({
         id: '123456789',
-        name: 'Joe Raft',
-        email: 'joe.raft@example.com',
+        name: 'Nick Expert',
+        email: 'nick.expert@example.com',
         picture: 'https://via.placeholder.com/40x40'
       });
     }, 1000); // Simulate network delay

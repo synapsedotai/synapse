@@ -26,7 +26,7 @@ export const employees: Employee[] = [
   },
   {
     id: "2", 
-    name: "Sarah Chen",
+    name: "Nick Expert",
     title: "DevOps Engineer",
     department: "Infrastructure Team",
     office: "San Francisco Office",
@@ -34,7 +34,7 @@ export const employees: Employee[] = [
     expertise: ["Kubernetes", "CI/CD", "AWS", "Docker", "Monitoring", "Infrastructure", "Deployment"],
     experience: "4+ years in DevOps",
     about: "Manages our entire cloud infrastructure and deployment pipelines. Expert in containerization, orchestration, and monitoring systems. Can help with scaling issues, performance optimization, and infrastructure best practices.",
-    email: "sarah.chen@company.com"
+    email: "nick.expert@company.com"
   },
   {
     id: "3",
