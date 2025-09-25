@@ -1,4 +1,4 @@
-Synapse API
+# Synapse API
 
 Express + Postgres backend for expert finder and knowledge risk graph.
 
