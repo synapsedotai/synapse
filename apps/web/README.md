@@ -1,17 +1,17 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Synapse Web
+
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](https://synapse-ai.pages.dev/)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange?style=flat-square&logo=cloudflare)](https://workers.cloudflare.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.4-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+
+This is a [Next.js](https://nextjs.org) project deployed on [Cloudflare Workers](https://workers.cloudflare.com/) using [OpenNext](https://opennext.js.org/).
 
 ## Getting Started
 
 First, run the development server:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
@@ -29,8 +29,25 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deploy to Cloudflare Workers
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This app is deployed on [Cloudflare Workers](https://workers.cloudflare.com/) using [OpenNext](https://opennext.js.org/).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Development Commands
+
+```bash
+bun run dev      # Start development server
+bun run build    # Build for production
+bun run preview  # Preview in Workers runtime locally
+bun run deploy   # Deploy to Cloudflare Workers
+```
+
+### Deployment
+
+The app is automatically deployed to Cloudflare Workers. You can also deploy manually:
+
+```bash
+bun run deploy
+```
+
+Check out the [OpenNext Cloudflare documentation](https://opennext.js.org/cloudflare) for more details.
