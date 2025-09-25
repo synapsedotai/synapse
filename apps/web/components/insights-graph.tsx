@@ -46,6 +46,7 @@ interface GraphLink {
   source: string;
   target: string;
   value: number;
+  type?: 'hierarchy' | 'call' | 'collaboration';
 }
 
 interface GraphData {
@@ -168,7 +169,8 @@ const generateSampleData = (): GraphData => {
     links.push({
       source: `node-${ceoId}`,
       target: `node-${nodeId}`,
-      value: 5
+      value: 5,
+      type: 'hierarchy'
     });
     csuiteIds.push(nodeId++);
   }
@@ -215,7 +217,8 @@ const generateSampleData = (): GraphData => {
     links.push({
       source: `node-${csuiteIds[csuiteIndex]}`,
       target: `node-${nodeId}`,
-      value: 4
+      value: 4,
+      type: 'hierarchy'
     });
     directorIds.push(nodeId++);
   }
@@ -258,7 +261,8 @@ const generateSampleData = (): GraphData => {
     links.push({
       source: `node-${directorIds[directorIndex]}`,
       target: `node-${nodeId}`,
-      value: 3
+      value: 3,
+      type: 'hierarchy'
     });
     seniorManagerIds.push(nodeId++);
   }
@@ -312,7 +316,8 @@ const generateSampleData = (): GraphData => {
         links.push({
           source: `node-${seniorManagerIds[managerIndex]}`,
           target: `node-${nodeId}`,
-          value: 3
+          value: 3,
+          type: 'hierarchy'
         });
         teamLeadIds.push(nodeId);
       } else if (levelData.group === 4) { // Senior ICs
@@ -320,7 +325,8 @@ const generateSampleData = (): GraphData => {
         links.push({
           source: `node-${teamLeadIds[leadIndex]}`,
           target: `node-${nodeId}`,
-          value: 2
+          value: 2,
+          type: 'hierarchy'
         });
         seniorICIds.push(nodeId);
       } else if (levelData.group === 5) { // Mid ICs
@@ -328,7 +334,8 @@ const generateSampleData = (): GraphData => {
         links.push({
           source: `node-${seniorICIds[seniorIndex]}`,
           target: `node-${nodeId}`,
-          value: 2
+          value: 2,
+          type: 'hierarchy'
         });
         midICIds.push(nodeId);
       } else { // Junior ICs
@@ -336,7 +343,8 @@ const generateSampleData = (): GraphData => {
         links.push({
           source: `node-${midICIds[midIndex]}`,
           target: `node-${nodeId}`,
-          value: 1
+          value: 1,
+          type: 'hierarchy'
         });
       }
       
@@ -344,15 +352,67 @@ const generateSampleData = (): GraphData => {
     }
   }
 
-  // Add some cross-functional connections
-  for (let i = 0; i < 30; i++) {
+
+  // Add call connections (green pulsing cross-team calls)
+  // Focus on same-level, different team connections
+  
+  // Same-level cross-team calls (most common pattern)
+  for (let i = 0; i < 40; i++) {
     const sourceIndex = Math.floor(Math.random() * nodes.length);
     const targetIndex = Math.floor(Math.random() * nodes.length);
-    if (sourceIndex !== targetIndex && Math.abs(nodes[sourceIndex].group - nodes[targetIndex].group) <= 2) {
+    
+    // Same level (group), different positions = different teams
+    if (sourceIndex !== targetIndex && 
+        nodes[sourceIndex].group === nodes[targetIndex].group && // Same organizational level
+        Math.random() > 0.3) { // 70% chance to create connection
+      
       links.push({
         source: `node-${sourceIndex}`,
         target: `node-${targetIndex}`,
-        value: 0.5
+        value: 1,
+        type: 'call'
+      });
+    }
+  }
+  
+  // Create communication hubs - some people who talk to many teams
+  const hubCount = 8; // Number of communication hubs
+  for (let h = 0; h < hubCount; h++) {
+    const hubIndex = Math.floor(Math.random() * nodes.length);
+    const connectionsPerHub = 4 + Math.floor(Math.random() * 6); // 4-9 connections per hub
+    
+    for (let c = 0; c < connectionsPerHub; c++) {
+      const targetIndex = Math.floor(Math.random() * nodes.length);
+      
+      // Hub can connect across levels but prefer same/adjacent levels
+      if (hubIndex !== targetIndex && 
+          Math.abs(nodes[hubIndex].group - nodes[targetIndex].group) <= 2) {
+        
+        links.push({
+          source: `node-${hubIndex}`,
+          target: `node-${targetIndex}`,
+          value: 1.2,
+          type: 'call'
+        });
+      }
+    }
+  }
+  
+  // Add some strategic cross-level calls (fewer, but important)
+  for (let i = 0; i < 15; i++) {
+    const sourceIndex = Math.floor(Math.random() * nodes.length);
+    const targetIndex = Math.floor(Math.random() * nodes.length);
+    
+    // Different levels, representing escalations or strategic calls
+    if (sourceIndex !== targetIndex && 
+        Math.abs(nodes[sourceIndex].group - nodes[targetIndex].group) >= 2 && 
+        Math.random() > 0.6) { // Less frequent than same-level calls
+      
+      links.push({
+        source: `node-${sourceIndex}`,
+        target: `node-${targetIndex}`,
+        value: 1.5,
+        type: 'call'
       });
     }
   }
@@ -417,9 +477,26 @@ export function InsightsGraph() {
       .nodeOpacity(0.9)
       .nodeResolution(16)
       .nodeVal('value')
-      .linkWidth(1.5)
-      .linkOpacity(0.6)
-      .linkColor('#94A3B8') // Tailwind slate-400
+      .linkWidth((link: any) => {
+        if (link.type === 'call') return 2;
+        return 1.5; // hierarchy
+      })
+      .linkOpacity((link: any) => {
+        if (link.type === 'call') return 0.9;
+        return 0.2; // hierarchy - very subtle
+      })
+      .linkColor((link: any) => {
+        if (link.type === 'call') {
+          // Create pulsing bright neon green effect for call links
+          const time = Date.now() * 0.004;
+          const pulse = Math.sin(time) * 0.2 + 0.8; // Oscillate between 0.6 and 1.0 (brighter)
+          // Bright neon green that pulses
+          const green = Math.floor((220 + 35 * pulse)); // Range from 220 to 255 (very bright)
+          const red = Math.floor((10 + 20 * pulse)); // Range from 10 to 30 (minimal red)
+          return `rgb(${red}, ${green}, 10)`; // Bright pulsing neon green
+        }
+        return '#F3F4F6'; // Very light gray for hierarchy (really subtle)
+      })
       .enableNavigationControls(true) // Enable pan/zoom/rotate controls
       .enablePointerInteraction(true) // Enable mouse interaction
       .onNodeHover((node: any, prevNode: any) => {
@@ -500,8 +577,21 @@ export function InsightsGraph() {
       }
     }, 100);
 
+    // Animation loop for pulsing call links
+    let animationId: number;
+    const animate = () => {
+      if (forceGraphRef.current) {
+        forceGraphRef.current.refresh(); // Trigger re-render to update colors
+      }
+      animationId = requestAnimationFrame(animate);
+    };
+    animate();
+
     // Cleanup function
     return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
       if (forceGraphRef.current) {
         forceGraphRef.current._destructor?.();
       }
@@ -560,15 +650,6 @@ export function InsightsGraph() {
         </div>
       </div>
 
-      {/* Controls hint */}
-      <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-sm border">
-        <div className="text-xs text-gray-600 space-y-1">
-          <div>🖱️ Left drag: Rotate view</div>
-          <div>⌨️ Right drag: Pan/Move</div>
-          <div>🔍 Scroll: Zoom in/out</div>
-          <div>👆 Click nodes for profiles</div>
-        </div>
-      </div>
       
       {/* Hover Tooltip */}
       <HoverTooltip

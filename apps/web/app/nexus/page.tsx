@@ -57,7 +57,7 @@ export default function AdminLoginPage() {
           <div className="flex justify-center">
             <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100 px-4 py-2 text-sm font-bold">
               <BoltIcon className="w-5 h-5 mr-3" />
-              <span className="tracking-widest">N E X U S  Portal</span>
+              <span className="tracking-widest">N E X U S</span>
             </Badge>
           </div>
 

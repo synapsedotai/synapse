@@ -44,7 +44,7 @@ export default function InterviewModePage() {
             <MicrophoneIcon className="h-6 w-6 text-green-600" />
           </div>
           <div>
-            <div className="font-semibold text-base">Voice Call</div>
+            <div className="font-semibold text-base">Voice Interview</div>
             <div className="text-sm text-muted-foreground">Speak naturally with AI interviewer</div>
           </div>
         </Button>

@@ -9,11 +9,10 @@ import { Separator } from "@/components/ui/separator";
 import {
   CalendarIcon,
   ClockIcon,
-  PhoneIcon,
-  VideoCameraIcon,
-  ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   PlayIcon,
+  VideoCameraIcon,
+  StarIcon,
 } from "@heroicons/react/24/solid";
 
 // Mock meeting data
@@ -98,24 +97,6 @@ const pastMeetings = [
 export default function MeetingsPage() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
 
-  const getMeetingIcon = (type: string) => {
-    switch (type) {
-      case 'video': return <VideoCameraIcon className="h-4 w-4" />;
-      case 'voice': return <PhoneIcon className="h-4 w-4" />;
-      case 'chat': return <ChatBubbleLeftRightIcon className="h-4 w-4" />;
-      default: return <CalendarIcon className="h-4 w-4" />;
-    }
-  };
-
-  const getMeetingTypeColor = (type: string) => {
-    switch (type) {
-      case 'video': return 'bg-purple-100 text-purple-700';
-      case 'voice': return 'bg-green-100 text-green-700';
-      case 'chat': return 'bg-blue-100 text-blue-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
-
   return (
     <div className="p-8 space-y-6">
       {/* Header */}
@@ -196,10 +177,6 @@ export default function MeetingsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-semibold text-sm">{meeting.name}</h4>
-                    <Badge className={getMeetingTypeColor(meeting.type)} variant="secondary">
-                      {getMeetingIcon(meeting.type)}
-                      <span className="ml-1 capitalize">{meeting.type}</span>
-                    </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{meeting.role}</p>
                   <p className="text-sm font-medium">{meeting.topic}</p>
@@ -240,13 +217,9 @@ export default function MeetingsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h4 className="font-semibold text-sm">{meeting.name}</h4>
-                    <Badge className={getMeetingTypeColor(meeting.type)} variant="secondary">
-                      {getMeetingIcon(meeting.type)}
-                      <span className="ml-1 capitalize">{meeting.type}</span>
-                    </Badge>
                     <div className="flex items-center gap-1">
                       {[...Array(meeting.rating)].map((_, i) => (
-                        <div key={i} className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                        <StarIcon key={i} className="w-3 h-3 text-yellow-400" />
                       ))}
                     </div>
                   </div>
