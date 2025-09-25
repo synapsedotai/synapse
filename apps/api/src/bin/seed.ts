@@ -64,14 +64,14 @@ async function seedOrgStructure(target: number) {
   if (people.length < 10) return; // rely on CSV; keep light
   // Assign one c-suite, a few managers, rest ICs
   const ceo = people[0].id;
-  await prisma.employees.update({ where: { id: ceo }, data: { org_role: 'c_suite', manager_id: null } });
+  await query(`update employees set org_role = 'c_suite', manager_id = null where id = $1`, [ceo]);
   const managers = people.slice(1, 6).map(p => p.id);
   for (const mid of managers) {
-    await prisma.employees.update({ where: { id: mid }, data: { org_role: 'manager', manager_id: ceo } });
+    await query(`update employees set org_role = 'manager', manager_id = $1 where id = $2`, [ceo, mid]);
   }
   let m = 0;
   for (const p of people.slice(6, Math.min(target, people.length))) {
-    await prisma.employees.update({ where: { id: p.id }, data: { org_role: 'ic', manager_id: managers[m % managers.length] } });
+    await query(`update employees set org_role = 'ic', manager_id = $1 where id = $2`, [managers[m % managers.length], p.id]);
     m++;
   }
 }
@@ -80,11 +80,20 @@ async function seedExpertiseAndMeetings() {
   // Create a meeting on Kubernetes between two early employees if not present
   const emps = await prisma.employees.findMany({ select: { id: true }, take: 50 });
   if (emps.length < 2) return;
-  const meeting = await prisma.meetings.create({ data: { topic: 'Kubernetes', summary: 'Probe tuning session' } });
-  await prisma.meeting_participants.create({ data: { meeting_id: meeting.id, employee_id: emps[0].id } });
-  await prisma.meeting_participants.create({ data: { meeting_id: meeting.id, employee_id: emps[1].id } });
+  const ins = await query<{ id: string }>(
+    `insert into meetings(topic, summary) values ($1, $2) returning id`,
+    ['Kubernetes', 'Probe tuning session']
+  );
+  const meetingId = ins.rows[0].id;
+  await query(`insert into meeting_participants(meeting_id, employee_id) values ($1, $2)`, [meetingId, emps[0].id]);
+  await query(`insert into meeting_participants(meeting_id, employee_id) values ($1, $2)`, [meetingId, emps[1].id]);
   const t = await prisma.topics.upsert({ where: { name: 'Kubernetes' }, update: {}, create: { name: 'Kubernetes' } });
-  await prisma.meeting_topics.create({ data: { meeting_id: meeting.id, topic_id: t.id, confidence: 0.9 } } as any);
+  await query(
+    `insert into meeting_topics(meeting_id, topic_id, confidence)
+     values ($1, $2, $3)
+     on conflict (meeting_id, topic_id) do update set confidence = excluded.confidence`,
+    [meetingId, t.id as any, 0.9]
+  );
 
   // Diversify topics across first 20 employees
   const demoTopics = ['Terraform', 'CI/CD', 'IAM', 'Payments', 'Postgres', 'React', 'TypeScript'];
