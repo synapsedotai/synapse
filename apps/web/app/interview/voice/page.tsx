@@ -21,6 +21,8 @@ import {
 } from "@heroicons/react/24/solid";
 
 // Constants for the agent configuration
+console.log(process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID);
+
 const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || '';
 const AGENT_PHONE_NUMBER_ID = 'phnum_0601k600gn01eyz9e9w49g2fzq97';
 const TEST_PHONE_NUMBER = '+491794910770';
