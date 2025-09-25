@@ -4,14 +4,60 @@ import { prisma } from '../db.js';
 
 export const graphRouter = Router();
 
-const schema = z.object({ topic: z.string().min(1).optional() });
+const schema = z.object({ topic: z.string().min(1).optional(), mode: z.string().optional() });
 
 graphRouter.get('/api/graph', async (req, res) => {
-  const parsed = schema.safeParse({ topic: req.query.topic });
+  const parsed = schema.safeParse({ topic: req.query.topic, mode: req.query.mode });
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues.map(i => ({ field: i.path.join('.'), message: i.message })) });
   }
-  const { topic } = parsed.data;
+  const { topic, mode } = parsed.data;
+  if (mode === 'knowledge') {
+    try {
+      const nodesBase = await prisma.$queryRaw<Array<{ id: string; name: string; total: number }>>`
+        with selected as (
+          select e.id, e.name, coalesce(sum(es.score)::float, 0) as total
+          from employees e left join expertise_scores es on es.employee_id = e.id
+          group by e.id, e.name
+          order by total desc
+          limit 50
+        )
+        select id, name, total from selected`;
+      const edges = await prisma.$queryRaw<Array<{ a: string; b: string; weight: number }>>`
+        with selected as (
+          select e.id, e.name, coalesce(sum(es.score)::float, 0) as total
+          from employees e left join expertise_scores es on es.employee_id = e.id
+          group by e.id, e.name
+          order by total desc
+          limit 50
+        ),
+        tcounts as (
+          select topic_id, count(distinct employee_id)::float as c from expertise_scores group by topic_id
+        ),
+        totals as (
+          select count(*)::float as n from employees
+        ),
+        pairs as (
+          select e1.employee_id as a, e2.employee_id as b,
+                 least(e1.score, e2.score)::float * ln((select n from totals) / nullif((select c from tcounts where topic_id = e1.topic_id),0) + 1) as contrib
+          from expertise_scores e1
+          join expertise_scores e2 on e1.topic_id = e2.topic_id and e1.employee_id < e2.employee_id
+          where e1.employee_id in (select id from selected) and e2.employee_id in (select id from selected)
+        )
+        select a, b, sum(contrib) as weight
+        from pairs
+        group by a, b
+        having sum(contrib) >= 0.3
+        order by weight desc
+        limit 300`;
+      const nodes = nodesBase.map(n => ({ id: n.id, label: n.name, score: Number(n.total) }));
+      const edgeObjs = edges.map(e => ({ source: e.a, target: e.b, weight: Number(e.weight), sharedTopics: [] as any[] }));
+      return res.json({ nodes, edges: edgeObjs, insights: { type: 'knowledge' } });
+    } catch (e) {
+      console.error('knowledge graph error', e);
+      return res.json({ nodes: [], edges: [], insights: { type: 'knowledge' } });
+    }
+  }
   if (!topic) {
     // Org hierarchy tree: nodes are employees; edges are manager -> report
     const employees = await prisma.employees.findMany({ select: { id: true, name: true, role: true, manager_id: true } });

@@ -78,13 +78,27 @@ async function seedOrgStructure(target: number) {
 
 async function seedExpertiseAndMeetings() {
   // Create a meeting on Kubernetes between two early employees if not present
-  const emps = await prisma.employees.findMany({ select: { id: true }, take: 5 });
+  const emps = await prisma.employees.findMany({ select: { id: true }, take: 50 });
   if (emps.length < 2) return;
   const meeting = await prisma.meetings.create({ data: { topic: 'Kubernetes', summary: 'Probe tuning session' } });
   await prisma.meeting_participants.create({ data: { meeting_id: meeting.id, employee_id: emps[0].id } });
   await prisma.meeting_participants.create({ data: { meeting_id: meeting.id, employee_id: emps[1].id } });
   const t = await prisma.topics.upsert({ where: { name: 'Kubernetes' }, update: {}, create: { name: 'Kubernetes' } });
   await prisma.meeting_topics.create({ data: { meeting_id: meeting.id, topic_id: t.id, confidence: 0.9 } } as any);
+
+  // Diversify topics across first 20 employees
+  const demoTopics = ['Terraform', 'CI/CD', 'IAM', 'Payments', 'Postgres', 'React', 'TypeScript'];
+  for (let i = 0; i < Math.min(20, emps.length); i++) {
+    const e = emps[i];
+    for (const name of demoTopics.slice(0, (i % demoTopics.length) + 1)) {
+      const top = await prisma.topics.upsert({ where: { name }, update: {}, create: { name } });
+      await prisma.expertise_scores.upsert({
+        where: { employee_id_topic_id: { employee_id: e.id, topic_id: top.id } },
+        create: { employee_id: e.id, topic_id: top.id, score: Math.max(0.4, Math.random()), freshness_days: Math.floor(Math.random() * 60) },
+        update: { score: { set: Math.max(0.4, Math.random()) }, freshness_days: { set: Math.floor(Math.random() * 60) } }
+      } as any);
+    }
+  }
 }
 
 main().catch(async (e) => {

@@ -135,6 +135,14 @@ GET /api/graph
 ```
 
 Topic view (knowledge graph):
+Global knowledge view (shared topics with IDF weighting):
+```
+GET /api/graph?mode=knowledge
+# Response
+{ "nodes": [ { "id": "<uuid>", "label": "Name", "score": 3.2 } ],
+  "edges": [ { "source": "<uuidA>", "target": "<uuidB>", "weight": 0.75 } ],
+  "insights": { "type": "knowledge" } }
+```
 ```
 GET /api/graph?topic=Kubernetes
 # Response
