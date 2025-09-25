@@ -3,7 +3,6 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { z } from "zod";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-export const runtime = 'edge';
 
 export async function POST(request: Request) {
   try {
