@@ -8,11 +8,14 @@ model employees {
   name       String
   team       String?
   role       String?
+  manager_id String?  @db.Uuid
   pay_band   Int?
   created_at DateTime @default(now()) @db.Timestamptz(6)
 
   docs             docs[]
   expertise_scores expertise_scores[]
+  manager          employees? @relation("EmployeeManager", fields: [manager_id], references: [id])
+  reports          employees[] @relation("EmployeeManager")
 
   @@map("employees")
 }

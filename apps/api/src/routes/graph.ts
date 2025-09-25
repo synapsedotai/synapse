@@ -4,7 +4,7 @@ import { prisma } from '../db.js';
 
 export const graphRouter = Router();
 
-const schema = z.object({ topic: z.string().min(1) });
+const schema = z.object({ topic: z.string().min(1).optional() });
 
 graphRouter.get('/api/graph', async (req, res) => {
   const parsed = schema.safeParse({ topic: req.query.topic });
@@ -12,6 +12,13 @@ graphRouter.get('/api/graph', async (req, res) => {
     return res.status(400).json({ error: parsed.error.issues.map(i => ({ field: i.path.join('.'), message: i.message })) });
   }
   const { topic } = parsed.data;
+  if (!topic) {
+    // Org hierarchy tree: nodes are employees; edges are manager -> report
+    const employees = await prisma.employees.findMany({ select: { id: true, name: true, role: true, manager_id: true } });
+    const nodes = employees.map(e => ({ id: e.id, label: e.name, role: e.role ?? null }));
+    const edges = employees.filter(e => e.manager_id).map(e => ({ source: e.manager_id as string, target: e.id }));
+    return res.json({ nodes, edges, insights: { type: 'org' } });
+  }
   const rows = await prisma.$queryRaw<Array<{ employee_id: string; name: string; score: number; freshness_days: number }>>`
     with t as (select id from topics where name = ${topic})
     select e.employee_id, emp.name, e.score, e.freshness_days

@@ -7,9 +7,19 @@ create table if not exists employees (
   name text not null,
   team text,
   role text,
+  manager_id uuid references employees(id) on delete set null,
   pay_band int,
   created_at timestamptz default now()
 );
+
+-- Ensure manager_id exists if employees table pre-existed without it
+alter table employees add column if not exists manager_id uuid;
+do $$ begin
+  begin
+    alter table employees
+      add constraint employees_manager_fk foreign key (manager_id) references employees(id) on delete set null;
+  exception when duplicate_object then null; end;
+end $$;
 
 create table if not exists topics (
   id bigserial primary key,
@@ -52,6 +62,7 @@ create table if not exists audit_log (
 
 create index if not exists idx_expertise_employee on expertise_scores(employee_id);
 create index if not exists idx_docs_employee on docs(employee_id);
+create index if not exists idx_employees_manager on employees(manager_id);
 -- ivfflat requires analyze and suitable list size, use defaults for demo
 do $$ begin
   begin
