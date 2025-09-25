@@ -31,6 +31,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    labels:
+      - traefik.http.services.synapse-api.loadbalancer.server.port=4000
     restart: unless-stopped
     # Uncomment to add volume mounts for persistent data
     # volumes:
