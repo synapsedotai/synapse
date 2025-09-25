@@ -15,7 +15,7 @@ export default function VideoInterviewPage() {
     const container = containerRef.current;
     const iframe = document.createElement('iframe');
     
-    iframe.src = 'https://bey.chat/cb50f891-2a25-4d51-b4f9-750e7ac39d08';
+    iframe.src = 'https://bey.chat/7f1a42ea-e9cd-4686-9cf6-d7eda8b97b78';
     iframe.style.width = '100%';
     iframe.style.height = '100%';
     iframe.style.border = 'none';

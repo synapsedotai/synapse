@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useConversation } from '@elevenlabs/react';
 import { Button } from "@/components/ui/button";
@@ -19,11 +19,25 @@ interface VoiceInterviewProps {
 
 export function VoiceInterview({ onBack }: VoiceInterviewProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [agentId, setAgentId] = useState<string>('');
   const searchParams = useSearchParams();
 
-  // Get agent ID from URL params or environment  
-  const agentId = searchParams?.get('agent_id') || 
-                  process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
+  // Fetch agent ID from server or URL params
+  useEffect(() => {
+    const urlAgentId = searchParams?.get('agent_id');
+    if (urlAgentId) {
+      setAgentId(urlAgentId);
+    } else {
+      fetch('/api/config')
+        .then(res => res.json())
+        .then(data => {
+          if (data.elevenlabsAgentId) {
+            setAgentId(data.elevenlabsAgentId);
+          }
+        })
+        .catch(err => console.error('Failed to fetch config:', err));
+    }
+  }, [searchParams]);
 
   // Minimal conversation setup - exactly as per docs
   const conversation = useConversation();
