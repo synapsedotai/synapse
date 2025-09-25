@@ -14,6 +14,7 @@ export type Env = {
   OPENAI_API_KEY?: string;
   OPENAI_EMBED_MODEL: string;
   EMBED_MOCK: boolean;
+  EMBED_FALLBACK: boolean;
   RETENTION_DAYS: number;
 };
 
@@ -39,6 +40,7 @@ export const env: Env = {
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OPENAI_EMBED_MODEL: process.env.OPENAI_EMBED_MODEL ?? 'text-embedding-3-small',
   EMBED_MOCK: parseBoolean(process.env.EMBED_MOCK, false),
+  EMBED_FALLBACK: parseBoolean(process.env.EMBED_FALLBACK, false),
   RETENTION_DAYS: Number(process.env.RETENTION_DAYS ?? 90),
 };
 

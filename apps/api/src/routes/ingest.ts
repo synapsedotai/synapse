@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { query, withTransaction } from '../db.js';
 import { chunk } from '../adapters/chunker.js';
-import { getEmbedder } from '../adapters/embedder.js';
+import { getEmbedderWithFallback } from '../adapters/embedder.js';
 import { trace, redact } from '../util/trace.js';
 import { vectorLiteral } from '../util/vector.js';
 
@@ -35,7 +35,7 @@ ingestRouter.post('/api/ingest', async (req, res) => {
     if (!text && url) text = await fetchPublicUrl(url);
     if (!text) return res.status(400).json({ error: [{ field: 'text', message: 'No text available' }] });
     const pieces = chunk(text, { size: 550, overlap: 70 });
-    const embedder = getEmbedder();
+    const embedder = getEmbedderWithFallback();
 
     const out = await withTransaction(async (client) => {
       const doc = await client.query(

@@ -58,6 +58,32 @@ export function getEmbedder(): Embedder {
   return new MockEmbedder();
 }
 
+class FallbackEmbedder implements Embedder {
+  constructor(private primary: Embedder, private fallback: Embedder) {}
+  async embed(text: string): Promise<number[]> {
+    try {
+      return await this.primary.embed(text);
+    } catch (e) {
+      await trace({ tool: 'embed.fallback', ok: false, ms: 0, detailsRedacted: { primary: this.primary.model(), error: e instanceof Error ? e.message : String(e) } });
+      return await this.fallback.embed(text);
+    }
+  }
+  async getDim(): Promise<number> {
+    try { return await this.primary.getDim(); } catch { return await this.fallback.getDim(); }
+  }
+  model(): string { return `${this.primary.model()}|fallback`; }
+}
+
+// Replace direct embedder with fallback wrapper so demos never break on transient errors
+export function getEmbedderWithFallback(): Embedder {
+  const base = getEmbedder();
+  if (env.EMBED_FALLBACK) {
+    const fallback = new MockEmbedder();
+    return new FallbackEmbedder(base, fallback);
+  }
+  return base;
+}
+
 class OpenAIEmbedder implements Embedder {
   private dimCached: number | null = null;
   model(): string { return env.OPENAI_EMBED_MODEL; }
@@ -78,12 +104,22 @@ class OpenAIEmbedder implements Embedder {
     }
     type OpenAIEmbeddingResponse = { data: Array<{ embedding: number[] }> };
     const json = (await resp.json()) as OpenAIEmbeddingResponse;
-    const vector = json.data?.[0]?.embedding ?? [];
-    const dim = vector.length;
+    let vector = json.data?.[0]?.embedding ?? [];
+    let dim = vector.length;
+    // If an existing dim is persisted, adjust to it for compatibility
+    try {
+      const persisted = fs.readFileSync(paths.embedDimFile, 'utf8');
+      const target = Number(persisted.trim());
+      if (target > 0 && target !== dim) {
+        if (target < dim) vector = vector.slice(0, target);
+        else if (target > dim) vector = [...vector, ...Array(target - dim).fill(0)];
+        dim = target;
+      }
+    } catch {}
     if (!this.dimCached && dim > 0) {
       this.dimCached = dim;
       try {
-        fs.writeFileSync(paths.embedDimFile, String(dim), 'utf8');
+        if (!fs.existsSync(paths.embedDimFile)) fs.writeFileSync(paths.embedDimFile, String(dim), 'utf8');
         await setVectorDimIfEmpty(dim);
       } catch {
         void 0;

@@ -1,5 +1,5 @@
 import { prisma } from '../db.js';
-import { getEmbedder } from './embedder.js';
+import { getEmbedderWithFallback } from './embedder.js';
 import { CandidateTopic, Snippet } from '../types.js';
 import { trace } from '../util/trace.js';
 import { vectorLiteral } from '../util/vector.js';
@@ -35,7 +35,7 @@ export async function extractTopics(text: string, max = 8): Promise<CandidateTop
 }
 
 export async function search(queryText: string, topK: number): Promise<{ snippets: Snippet[]; candidateTopics: CandidateTopic[] }> {
-  const embedder = getEmbedder();
+  const embedder = getEmbedderWithFallback();
   const start = Date.now();
   const qv = await embedder.embed(queryText);
   const msEmbed = Date.now() - start;
