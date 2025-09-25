@@ -2,9 +2,17 @@
 
 Synapse Monorepo based on [Turborepo](https://turborepo.com).
 
-## What's inside?
+## Stack
 
-This Turborepo includes the following packages/apps:
+### Frontend
+
+The Synapse frontend uses [Next.js](https://nextjs.org/) with [TailwindCSS](https://tailwindcss.com/), [Jotai](https://jotai.org/), and is deployed on [Cloudflare Workers](https://workers.cloudflare.com/) via [OpenNext](https://opennext.js.org/).
+
+Icons are from [Heroicons](https://heroicons.com/).
+
+### Backend
+
+The Synapse backend uses [Express.js](https://expressjs.com/) with [Prisma](https://www.prisma.io/) as ORM & [PostgreSQL](https://www.postgresql.org/) as DB.
 
 ### Apps and Packages
 
