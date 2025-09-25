@@ -11,6 +11,7 @@ import { expertiseRouter } from './routes/expertise.js';
 import { graphRouter } from './routes/graph.js';
 import { privacyRouter } from './routes/privacy.js';
 import { meetingsRouter } from './routes/meetings.js';
+import { profileRouter } from './routes/profile.js';
 
 async function main() {
   try {
@@ -31,6 +32,7 @@ async function main() {
   app.use(graphRouter);
   app.use(privacyRouter);
   app.use(meetingsRouter);
+  app.use(profileRouter);
 
   app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const message = err instanceof Error ? err.message : String(err);

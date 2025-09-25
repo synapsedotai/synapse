@@ -20,7 +20,7 @@ export async function extractTopics(text: string, max = 8): Promise<CandidateTop
     try {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed.slice(0, max).map((t: { name: string; confidence?: number }) => ({ name: String(t.name), confidence: Math.max(0, Math.min(1, Number(t.confidence) || 0.5)) }));
+        return parsed.slice(0, max).map((t: { name: string; confidence?: number }) => ({ name: normalizeTopicName(String(t.name)), confidence: Math.max(0, Math.min(1, Number(t.confidence) || 0.5)) }));
       }
     } catch {}
   }
@@ -31,7 +31,7 @@ export async function extractTopics(text: string, max = 8): Promise<CandidateTop
   const counts = new Map<string, number>();
   for (const w of words) counts.set(w, (counts.get(w) ?? 0) + 1);
   const top = [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0, max);
-  return top.map(([name, c]) => ({ name: name[0].toUpperCase() + name.slice(1), confidence: Math.min(0.95, 0.5 + c / (words.length + 1)) }));
+  return top.map(([name, c]) => ({ name: normalizeTopicName(name[0].toUpperCase() + name.slice(1)), confidence: Math.min(0.95, 0.5 + c / (words.length + 1)) }));
 }
 
 export async function search(queryText: string, topK: number): Promise<{ snippets: Snippet[]; candidateTopics: CandidateTopic[] }> {
@@ -51,5 +51,32 @@ export async function search(queryText: string, topK: number): Promise<{ snippet
   const snippets: Snippet[] = rows.map(r => ({ text: r.text_snippet.slice(0, 200), source: r.title, docId: r.doc_id }));
   const candidateTopics = await extractTopics(queryText + ' ' + snippets.map(s => s.text).join(' '), 8);
   return { snippets, candidateTopics };
+}
+
+// Basic topic normalization: collapse variants/synonyms used in demo content
+const TOPIC_ALIASES: Record<string, string> = {
+  'k8s': 'Kubernetes',
+  'kubernetes probes': 'Kubernetes',
+  'gke': 'Kubernetes',
+  'github actions': 'CI/CD',
+  'ci/cd hardening': 'CI/CD',
+  'ci/cd': 'CI/CD',
+  'terraform iam roles': 'Terraform',
+  'iam security': 'IAM',
+  'access management': 'IAM',
+  'infrastructure as code': 'Terraform',
+};
+
+export function normalizeTopicName(name: string): string {
+  const base = name.trim().toLowerCase();
+  if (TOPIC_ALIASES[base]) return TOPIC_ALIASES[base];
+  // strip punctuation and revisit
+  const stripped = base.replace(/[^a-z0-9\s/]+/g, '').trim();
+  if (TOPIC_ALIASES[stripped]) return TOPIC_ALIASES[stripped];
+  // Title-case
+  return name
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
 }
 

@@ -7,8 +7,9 @@ import { search as kbSearch } from '../adapters/kb.js';
 
 const schema = z.object({
   employeeId: z.string().uuid(),
-  answers: z.array(z.object({ q: z.string(), a: z.string() })).min(1)
-});
+  answers: z.array(z.object({ q: z.string(), a: z.string() })).min(0).optional(),
+  summary: z.string().min(10).max(5000).optional()
+}).refine(v => (v.summary && v.summary.length >= 10) || (v.answers && v.answers.length > 0), { message: 'Provide summary or answers' });
 
 export const fridayRouter = Router();
 
@@ -23,9 +24,9 @@ fridayRouter.post('/api/friday', async (req, res) => {
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.issues.map(i => ({ field: i.path.join('.'), message: i.message })) });
   }
-  const { employeeId, answers } = parsed.data;
+  const { employeeId } = parsed.data;
   try {
-    const text = answers.map(x => `${x.q}: ${x.a}`).join('\n');
+    const text = parsed.data.summary ?? (parsed.data.answers ?? []).map(x => `${x.q}: ${x.a}`).join('\n');
     // persist profile summary (steckbrief)
     await prisma.employees.update({ where: { id: employeeId }, data: { profile_summary: text } }).catch(() => undefined);
     const topics = await extractTopicsFromText(text, 12);
