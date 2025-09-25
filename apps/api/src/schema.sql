@@ -8,6 +8,8 @@ create table if not exists employees (
   team text,
   role text,
   manager_id uuid references employees(id) on delete set null,
+  org_role text default 'ic',
+  profile_summary text,
   pay_band int,
   created_at timestamptz default now()
 );
@@ -63,6 +65,35 @@ create table if not exists audit_log (
 create index if not exists idx_expertise_employee on expertise_scores(employee_id);
 create index if not exists idx_docs_employee on docs(employee_id);
 create index if not exists idx_employees_manager on employees(manager_id);
+
+-- Meetings schema
+create table if not exists meetings (
+  id uuid primary key default gen_random_uuid(),
+  topic text not null,
+  summary text,
+  started_at timestamptz default now(),
+  duration_minutes int,
+  created_by uuid references employees(id) on delete set null,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists meeting_participants (
+  meeting_id uuid references meetings(id) on delete cascade,
+  employee_id uuid references employees(id) on delete cascade,
+  role text default 'participant',
+  primary key(meeting_id, employee_id)
+);
+
+create table if not exists meeting_topics (
+  meeting_id uuid references meetings(id) on delete cascade,
+  topic_id bigint references topics(id) on delete cascade,
+  confidence real,
+  primary key(meeting_id, topic_id)
+);
+
+create index if not exists idx_meetings_created_by on meetings(created_by);
+create index if not exists idx_meeting_participants_employee on meeting_participants(employee_id);
 -- ivfflat requires analyze and suitable list size, use defaults for demo
 do $$ begin
   begin

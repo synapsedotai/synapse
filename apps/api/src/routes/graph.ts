@@ -62,8 +62,24 @@ graphRouter.get('/api/graph', async (req, res) => {
     weight: Number(er.weight),
     sharedTopics: [{ name: topic, scoreA: Number(er.score_a), scoreB: Number(er.score_b) }]
   }));
+  // Co-participation meeting edges on same topic (lightweight weight 0.3)
+  const meetingEdges = await prisma.$queryRaw<Array<{ a: string; b: string; weight: number }>>`
+    with t as (select id from topics where name = ${topic}),
+    mt as (
+      select mt.meeting_id from meeting_topics mt where mt.topic_id = (select id from t)
+    ),
+    pairs as (
+      select p1.employee_id as a, p2.employee_id as b
+      from meeting_participants p1
+      join meeting_participants p2 on p1.meeting_id = p2.meeting_id and p1.employee_id < p2.employee_id
+      where p1.meeting_id = any (select meeting_id from mt)
+    )
+    select a, b, 0.3::float as weight from pairs
+  `;
+  const meetingEdgeObjs = meetingEdges.map(me => ({ source: me.a, target: me.b, weight: Number(me.weight), sharedTopics: [{ name: topic }] }));
+  const allEdges = [...edges, ...meetingEdgeObjs];
   const busFactor = nodes.length >= 3 ? nodes.slice(0,3).reduce((s,n)=>s+n.score,0) / (nodes.reduce((s,n)=>s+n.score,0)+1e-6) : 1;
-  res.json({ nodes, edges, insights: { busFactor } });
+  res.json({ nodes, edges: allEdges, insights: { busFactor } });
 });
 
 

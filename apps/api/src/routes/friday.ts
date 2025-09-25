@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { withTransaction } from '../db.js';
+import { withTransaction, prisma } from '../db.js';
 import { trace } from '../util/trace.js';
 import { CandidateTopic } from '../types.js';
 import { search as kbSearch } from '../adapters/kb.js';
@@ -26,6 +26,8 @@ fridayRouter.post('/api/friday', async (req, res) => {
   const { employeeId, answers } = parsed.data;
   try {
     const text = answers.map(x => `${x.q}: ${x.a}`).join('\n');
+    // persist profile summary (steckbrief)
+    await prisma.employees.update({ where: { id: employeeId }, data: { profile_summary: text } }).catch(() => undefined);
     const topics = await extractTopicsFromText(text, 12);
     const updated: { name: string; score: number }[] = [];
     await withTransaction(async (client) => {

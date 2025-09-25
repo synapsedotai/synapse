@@ -9,6 +9,8 @@ model employees {
   team       String?
   role       String?
   manager_id String?  @db.Uuid
+  org_role   String?  @default("ic")
+  profile_summary String?
   pay_band   Int?
   created_at DateTime @default(now()) @db.Timestamptz(6)
 
@@ -16,8 +18,51 @@ model employees {
   expertise_scores expertise_scores[]
   manager          employees? @relation("EmployeeManager", fields: [manager_id], references: [id])
   reports          employees[] @relation("EmployeeManager")
+  meetings_created meetings[] @relation("MeetingsCreated")
+  meeting_participants meeting_participants[]
 
   @@map("employees")
+}
+
+model meetings {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  topic            String
+  summary          String?
+  started_at       DateTime @default(now()) @db.Timestamptz(6)
+  duration_minutes Int?
+  created_by       String?  @db.Uuid
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  creator employees? @relation("MeetingsCreated", fields: [created_by], references: [id])
+  participants meeting_participants[]
+  meeting_topics meeting_topics[]
+
+  @@map("meetings")
+}
+
+model meeting_participants {
+  meeting_id  String @db.Uuid
+  employee_id String @db.Uuid
+  role        String? @default("participant")
+
+  meeting  meetings  @relation(fields: [meeting_id], references: [id], onDelete: Cascade)
+  employee employees @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+
+  @@id([meeting_id, employee_id])
+  @@map("meeting_participants")
+}
+
+model meeting_topics {
+  meeting_id String @db.Uuid
+  topic_id   BigInt
+  confidence Float?
+
+  meeting meetings @relation(fields: [meeting_id], references: [id], onDelete: Cascade)
+  topics  topics   @relation(fields: [topic_id], references: [id], onDelete: Cascade)
+
+  @@id([meeting_id, topic_id])
+  @@map("meeting_topics")
 }
 
 model topics {
@@ -25,6 +70,7 @@ model topics {
   name  String @unique
 
   expertise_scores expertise_scores[]
+  meeting_topics meeting_topics[]
 
   @@map("topics")
 }
