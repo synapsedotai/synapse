@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "bunx tsx watch src/server.ts",
     "dev:worker": "bunx wrangler dev",
-    "build": "bunx tsc --noEmitOnError=false && bunx esbuild src/worker.ts --bundle --format=esm --platform=neutral --outfile=dist/worker.js --external:cloudflare:*",
+    "build": "bunx tsc --noEmitOnError false --skipLibCheck && bunx esbuild src/worker.ts --bundle --format=esm --platform=neutral --outfile=dist/worker.js --external:cloudflare:*",
     "deploy": "bunx wrangler deploy",
     "deploy:staging": "bunx wrangler deploy --env staging",
     "deploy:production": "bunx wrangler deploy --env production",
