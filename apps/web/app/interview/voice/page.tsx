@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,7 +21,9 @@ import {
 } from "@heroicons/react/24/solid";
 
 // Constants for the agent configuration
-// Note: These will be fetched from server-side in production
+console.log(process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID);
+
+const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || '';
 const AGENT_PHONE_NUMBER_ID = 'phnum_0601k600gn01eyz9e9w49g2fzq97';
 const TEST_PHONE_NUMBER = '+4915738255718';
 
@@ -29,7 +31,6 @@ export default function VoiceInterviewPage() {
   const router = useRouter();
   const [user] = useAtom(userDataAtom);
   const [selectedMode, setSelectedMode] = useState<'selection' | 'web' | 'phone'>('selection');
-  const [agentId, setAgentId] = useState<string>('');
   
   // State for immediate call
   const [isCallingNow, setIsCallingNow] = useState(false);
@@ -42,20 +43,8 @@ export default function VoiceInterviewPage() {
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
 
-  // Fetch agent ID from server on mount
-  useEffect(() => {
-    fetch('/api/config')
-      .then(res => res.json())
-      .then(data => {
-        if (data.elevenlabsAgentId) {
-          setAgentId(data.elevenlabsAgentId);
-        }
-      })
-      .catch(err => console.error('Failed to fetch config:', err));
-  }, []);
-
   const handleCallNow = async () => {
-    if (!agentId) {
+    if (!AGENT_ID) {
       setCallMessage('Agent not configured. Please contact support.');
       return;
     }
@@ -66,7 +55,7 @@ export default function VoiceInterviewPage() {
     try {
       const result = await callUser({
         phoneNumber: TEST_PHONE_NUMBER,
-        agentId: agentId,
+        agentId: AGENT_ID,
         agentPhoneNumberId: AGENT_PHONE_NUMBER_ID,
       });
 
@@ -180,7 +169,7 @@ export default function VoiceInterviewPage() {
               )}
               <Button 
                 onClick={handleCallNow} 
-                disabled={isCallingNow || !agentId}
+                disabled={isCallingNow || !AGENT_ID}
                 size="lg"
               >
                 {isCallingNow ? 'Calling...' : `Call ${TEST_PHONE_NUMBER}`}

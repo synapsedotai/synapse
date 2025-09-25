@@ -1,7 +1,5 @@
 'use server';
 
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-
 interface OutboundCallResponse {
   success: boolean;
   message: string;
@@ -20,16 +18,7 @@ export async function callUser({
   agentId, 
   agentPhoneNumberId 
 }: CallUserParams): Promise<{ success: boolean; message: string; data?: OutboundCallResponse }> {
-  let apiKey: string | undefined;
-  
-  try {
-    // Try to get from Cloudflare context first
-    const { env } = await getCloudflareContext();
-    apiKey = env.ELEVENLABS_API_KEY as string;
-  } catch {
-    // Fallback to process.env for local development
-    apiKey = process.env.ELEVENLABS_API_KEY;
-  }
+  const apiKey = process.env.ELEVENLABS_API_KEY;
   
   if (!apiKey) {
     return {
