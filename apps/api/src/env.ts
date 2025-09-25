@@ -11,8 +11,8 @@ export type Env = {
   ANTHROPIC_API_KEY?: string;
   ANTHROPIC_EMBED_MODEL: string;
   ANTHROPIC_TOPIC_MODEL?: string;
-  VOYAGE_API_KEY?: string;
-  VOYAGE_EMBED_MODEL: string;
+  OPENAI_API_KEY?: string;
+  OPENAI_EMBED_MODEL: string;
   EMBED_MOCK: boolean;
   RETENTION_DAYS: number;
 };
@@ -36,8 +36,8 @@ export const env: Env = {
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
   ANTHROPIC_EMBED_MODEL: process.env.ANTHROPIC_EMBED_MODEL ?? 'claude-embed',
   ANTHROPIC_TOPIC_MODEL: process.env.ANTHROPIC_TOPIC_MODEL ?? 'claude-3-5-sonnet-latest',
-  VOYAGE_API_KEY: process.env.VOYAGE_API_KEY,
-  VOYAGE_EMBED_MODEL: process.env.VOYAGE_EMBED_MODEL ?? 'voyage-3.5-lite',
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  OPENAI_EMBED_MODEL: process.env.OPENAI_EMBED_MODEL ?? 'text-embedding-3-small',
   EMBED_MOCK: parseBoolean(process.env.EMBED_MOCK, false),
   RETENTION_DAYS: Number(process.env.RETENTION_DAYS ?? 90),
 };

@@ -51,27 +51,34 @@ export class MockEmbedder implements Embedder {
   model(): string { return 'mock'; }
 }
 
-export class VoyageEmbedder implements Embedder {
+
+export function getEmbedder(): Embedder {
+  if (env.EMBED_MOCK) return new MockEmbedder();
+  if (env.OPENAI_API_KEY) return new OpenAIEmbedder();
+  return new MockEmbedder();
+}
+
+class OpenAIEmbedder implements Embedder {
   private dimCached: number | null = null;
-  model(): string { return env.VOYAGE_EMBED_MODEL; }
+  model(): string { return env.OPENAI_EMBED_MODEL; }
   async embed(text: string): Promise<number[]> {
     const start = Date.now();
-    const resp = await fetch('https://api.voyageai.com/v1/embeddings', {
+    const resp = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'Authorization': `Bearer ${env.VOYAGE_API_KEY ?? ''}`
+        'authorization': `Bearer ${env.OPENAI_API_KEY ?? ''}`
       },
-      body: JSON.stringify({ model: env.VOYAGE_EMBED_MODEL, input: [text], input_type: 'document' })
+      body: JSON.stringify({ model: env.OPENAI_EMBED_MODEL, input: text })
     });
     if (!resp.ok) {
       const body = await resp.text();
-      await trace({ tool: 'embed.voyage', ok: false, ms: Date.now() - start, detailsRedacted: { status: resp.status, body: body.slice(0, 200) } });
+      await trace({ tool: 'embed.openai', ok: false, ms: Date.now() - start, detailsRedacted: { status: resp.status, body: body.slice(0, 200) } });
       throw new Error(`Embedding failed: ${resp.status}`);
     }
-    type VoyageEmbeddingResponse = { data: Array<{ embedding: number[] }> };
-    const json = (await resp.json()) as VoyageEmbeddingResponse;
-    const vector: number[] = json?.data?.[0]?.embedding ?? [];
+    type OpenAIEmbeddingResponse = { data: Array<{ embedding: number[] }> };
+    const json = (await resp.json()) as OpenAIEmbeddingResponse;
+    const vector = json.data?.[0]?.embedding ?? [];
     const dim = vector.length;
     if (!this.dimCached && dim > 0) {
       this.dimCached = dim;
@@ -82,7 +89,7 @@ export class VoyageEmbedder implements Embedder {
         void 0;
       }
     }
-    await trace({ tool: 'embed.voyage', ok: true, ms: Date.now() - start, detailsRedacted: { dim } });
+    await trace({ tool: 'embed.openai', ok: true, ms: Date.now() - start, detailsRedacted: { dim } });
     return vector;
   }
   async getDim(): Promise<number> {
@@ -95,15 +102,8 @@ export class VoyageEmbedder implements Embedder {
         return dim;
       }
     } catch {}
-    // Call with a small probe to learn dimension if needed
     const v = await this.embed('probe');
     return v.length;
   }
-}
-
-export function getEmbedder(): Embedder {
-  if (env.EMBED_MOCK) return new MockEmbedder();
-  if (env.VOYAGE_API_KEY) return new VoyageEmbedder();
-  return new MockEmbedder();
 }
 
