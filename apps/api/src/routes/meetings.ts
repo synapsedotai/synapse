@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { prisma } from '../db.js';
+import { query } from '../db.js';
 
 export const meetingsRouter = Router();
 
@@ -16,31 +16,30 @@ meetingsRouter.post('/api/meetings', async (req, res) => {
   const parsed = meetingSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const { topic, summary, startedAt, durationMinutes, createdBy } = parsed.data;
-  const meeting = await prisma.meetings.create({
-    data: {
-      topic,
-      summary,
-      started_at: startedAt ? new Date(startedAt) : undefined,
-      duration_minutes: durationMinutes,
-      created_by: createdBy,
-    },
-  });
-  res.json(meeting);
+  const ins = await query<{ id: string; topic: string; summary: string | null; started_at: string }>(
+    `insert into meetings(topic, summary, started_at, duration_minutes, created_by)
+     values ($1, $2, coalesce($3::timestamptz, now()), $4, $5)
+     returning *`,
+    [topic, summary ?? null, startedAt ?? null, durationMinutes ?? null, createdBy ?? null]
+  );
+  res.json(ins.rows[0]);
 });
 
 meetingsRouter.get('/api/meetings', async (req, res) => {
   const employeeId = req.query.employeeId as string | undefined;
   if (employeeId) {
-    const rows = await prisma.$queryRaw<any[]>`
-      select m.* from meetings m
-      join meeting_participants p on p.meeting_id = m.id
-      where p.employee_id = ${employeeId}
-      order by m.started_at desc
-      limit 100`;
-    return res.json(rows);
+    const rows = await query<any>(
+      `select m.* from meetings m
+       join meeting_participants p on p.meeting_id = m.id
+       where p.employee_id = $1
+       order by m.started_at desc
+       limit 100`,
+      [employeeId]
+    );
+    return res.json(rows.rows);
   }
-  const rows = await prisma.meetings.findMany({ orderBy: { started_at: 'desc' }, take: 100 });
-  res.json(rows);
+  const rows = await query<any>(`select * from meetings order by started_at desc limit 100`);
+  res.json(rows.rows);
 });
 
 meetingsRouter.patch('/api/meetings/:id', async (req, res) => {
@@ -48,23 +47,24 @@ meetingsRouter.patch('/api/meetings/:id', async (req, res) => {
   const parsed = meetingSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const { topic, summary, startedAt, durationMinutes, createdBy } = parsed.data;
-  const meeting = await prisma.meetings.update({
-    where: { id },
-    data: {
-      topic,
-      summary,
-      started_at: startedAt ? new Date(startedAt) : undefined,
-      duration_minutes: durationMinutes,
-      created_by: createdBy,
-      updated_at: new Date(),
-    },
-  });
-  res.json(meeting);
+  const upd = await query<any>(
+    `update meetings set
+       topic = coalesce($2, topic),
+       summary = coalesce($3, summary),
+       started_at = coalesce($4::timestamptz, started_at),
+       duration_minutes = coalesce($5, duration_minutes),
+       created_by = coalesce($6, created_by),
+       updated_at = now()
+     where id = $1
+     returning *`,
+    [id, topic ?? null, summary ?? null, startedAt ?? null, durationMinutes ?? null, createdBy ?? null]
+  );
+  res.json(upd.rows[0]);
 });
 
 meetingsRouter.delete('/api/meetings/:id', async (req, res) => {
   const id = req.params.id;
-  await prisma.meetings.delete({ where: { id } });
+  await query(`delete from meetings where id = $1`, [id]);
   res.json({ ok: true });
 });
 
@@ -74,12 +74,14 @@ meetingsRouter.post('/api/meetings/:id/participants', async (req, res) => {
   const parsed = participantSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const { employeeId, role } = parsed.data;
-  const row = await prisma.meeting_participants.upsert({
-    where: { meeting_id_employee_id: { meeting_id: id, employee_id: employeeId } },
-    update: { role: role ?? 'participant' },
-    create: { meeting_id: id, employee_id: employeeId, role: role ?? 'participant' },
-  } as any);
-  res.json(row);
+  const row = await query(
+    `insert into meeting_participants(meeting_id, employee_id, role)
+     values ($1, $2, $3)
+     on conflict (meeting_id, employee_id) do update set role = excluded.role
+     returning *`,
+    [id, employeeId, role ?? 'participant']
+  );
+  res.json(row.rows[0]);
 });
 
 const meetingTopicSchema = z.object({ topic: z.string().min(1), confidence: z.number().min(0).max(1).optional() });
@@ -88,14 +90,17 @@ meetingsRouter.post('/api/meetings/:id/topics', async (req, res) => {
   const parsed = meetingTopicSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues });
   const { topic, confidence } = parsed.data;
-  const t = await prisma.topics.upsert({ where: { name: topic }, update: {}, create: { name: topic } });
-  const row = await prisma.meeting_topics.upsert({
-    where: { meeting_id_topic_id: { meeting_id: id, topic_id: t.id } },
-    update: { confidence: confidence ?? null },
-    create: { meeting_id: id, topic_id: t.id, confidence: confidence ?? null },
-  } as any);
-  // Avoid BigInt JSON issues by returning primitives only
-  res.json({ meetingId: id, topicId: Number(t.id), confidence: row.confidence ?? null });
+  const t = await query<{ id: number }>(
+    `insert into topics(name) values ($1) on conflict(name) do update set name = excluded.name returning id`,
+    [topic]
+  );
+  const mt = await query<{ meeting_id: string; topic_id: number; confidence: number | null }>(
+    `insert into meeting_topics(meeting_id, topic_id, confidence) values ($1, $2, $3)
+     on conflict (meeting_id, topic_id) do update set confidence = excluded.confidence
+     returning meeting_id, topic_id, confidence`,
+    [id, t.rows[0].id, confidence ?? null]
+  );
+  res.json({ meetingId: id, topicId: mt.rows[0].topic_id, confidence: mt.rows[0].confidence ?? null });
 });
 
 
