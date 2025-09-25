@@ -1,0 +1,14 @@
+email,name,team,role,pay_band
+alex@example.com,Alex Chen,Platform,SRE,6
+mia@example.com,Mia Patel,Platform,DevOps,5
+leo@example.com,Leo Garcia,Infra,Security Engineer,7
+sofia@example.com,Sofia Rossi,Data,ML Engineer,6
+noah@example.com,Noah Müller,Data,Data Engineer,5
+ava@example.com,Ava Dubois,Payments,Backend Engineer,6
+liam@example.com,Liam Novak,Payments,Tech Lead,7
+emi@example.com,Emi Tanaka,Core,Backend Engineer,5
+elia@example.com,Elia Cohen,Core,Staff Engineer,8
+zara@example.com,Zara Singh,Product,PM,5
+kai@example.com,Kai Anders,Core,Frontend Engineer,5
+ivy@example.com,Ivy Zhao,Core,QA Engineer,4
+
