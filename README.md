@@ -15,7 +15,7 @@ Icons are from [Heroicons](https://heroicons.com/).
 
 ### Backend
 
-The Synapse backend uses [Express.js](https://expressjs.com/) with [Prisma](https://www.prisma.io/) as ORM & [PostgreSQL](https://www.postgresql.org/) (via Supabase) as DB.
+The Synapse backend uses [Express.js](https://expressjs.com/) with [Prisma](https://www.prisma.io/) as ORM & [PostgreSQL](https://www.postgresql.org/) (via Supabase) as DB, deployed on [Cloudflare Workers](https://workers.cloudflare.com/).
 
 ### Apps and Packages
 
