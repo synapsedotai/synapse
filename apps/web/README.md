@@ -1,8 +1,8 @@
 # Synapse Web
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](https://synapse-ai.pages.dev/)
+[![Frontend Status](https://img.shields.io/badge/Frontend-Online-brightgreen?style=flat-square&logo=nextdotjs)](https://synapse.elia.vc/)
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-orange?style=flat-square&logo=cloudflare)](https://workers.cloudflare.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-15.5.4-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.4.2-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 
 This is a [Next.js](https://nextjs.org) project deployed on [Cloudflare Workers](https://workers.cloudflare.com/) using [OpenNext](https://opennext.js.org/).
 
