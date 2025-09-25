@@ -1,5 +1,8 @@
 # Synapse
 
+[![Frontend Status](https://img.shields.io/badge/Frontend-Online-brightgreen?style=flat-square&logo=nextdotjs)](https://synapse.elia.vc/)
+[![Backend Status](https://img.shields.io/badge/Backend-Online-brightgreen?style=flat-square&logo=typescript)](https://api.synapse.elia.vc/)
+
 Synapse Monorepo based on [Turborepo](https://turborepo.com).
 
 ## Stack
