@@ -8,6 +8,11 @@
   },
   "scripts": {
     "dev": "bunx tsx watch src/server.ts",
+    "dev:worker": "bunx wrangler dev",
+    "build": "bunx tsc && bunx esbuild src/worker.ts --bundle --format=esm --platform=neutral --outfile=dist/worker.js --external:cloudflare:*",
+    "deploy": "bunx wrangler deploy",
+    "deploy:staging": "bunx wrangler deploy --env staging",
+    "deploy:production": "bunx wrangler deploy --env production",
     "migrate": "bunx tsx src/bin/migrate.ts",
     "seed": "bunx tsx src/bin/seed.ts",
     "prisma:push": "bunx prisma db push --schema prisma/schema.prisma",
@@ -33,6 +38,8 @@
     "@types/express": "^4.17.21",
     "@types/pg": "^8.10.2",
     "@types/pg-format": "^1.0.2",
-    "prisma": "^5.20.0"
+    "prisma": "^5.20.0",
+    "wrangler": "^4.40.0",
+    "esbuild": "^0.24.0"
   }
 }
