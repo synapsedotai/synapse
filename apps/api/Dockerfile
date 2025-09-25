@@ -1,6 +1,12 @@
 # Use Bun as the base image (following your workspace rules)
 FROM oven/bun:1 AS base
 
+# Install OpenSSL and other required system dependencies for Prisma
+RUN apt-get update && apt-get install -y \
+    openssl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /app
 
