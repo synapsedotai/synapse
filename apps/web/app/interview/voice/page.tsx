@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -21,9 +21,6 @@ import {
 } from "@heroicons/react/24/solid";
 
 // Constants for the agent configuration
-console.log(process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID);
-
-const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID || '';
 const AGENT_PHONE_NUMBER_ID = 'phnum_0601k600gn01eyz9e9w49g2fzq97';
 const TEST_PHONE_NUMBER = '+4915738255718';
 
@@ -31,6 +28,8 @@ export default function VoiceInterviewPage() {
   const router = useRouter();
   const [user] = useAtom(userDataAtom);
   const [selectedMode, setSelectedMode] = useState<'selection' | 'web' | 'phone'>('selection');
+  const [agentId, setAgentId] = useState<string | null>(null);
+  const [isLoadingConfig, setIsLoadingConfig] = useState(true);
   
   // State for immediate call
   const [isCallingNow, setIsCallingNow] = useState(false);
@@ -43,8 +42,29 @@ export default function VoiceInterviewPage() {
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
 
+  // Fetch agent ID from API
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/config');
+        if (!response.ok) {
+          throw new Error('Failed to fetch config');
+        }
+        
+        const config = await response.json();
+        setAgentId(config.elevenlabs?.agentId || null);
+      } catch (error) {
+        console.error('Error fetching config:', error);
+      } finally {
+        setIsLoadingConfig(false);
+      }
+    };
+
+    fetchConfig();
+  }, []);
+
   const handleCallNow = async () => {
-    if (!AGENT_ID) {
+    if (!agentId) {
       setCallMessage('Agent not configured. Please contact support.');
       return;
     }
@@ -55,7 +75,7 @@ export default function VoiceInterviewPage() {
     try {
       const result = await callUser({
         phoneNumber: TEST_PHONE_NUMBER,
-        agentId: AGENT_ID,
+        agentId: agentId,
         agentPhoneNumberId: AGENT_PHONE_NUMBER_ID,
       });
 
@@ -138,8 +158,12 @@ export default function VoiceInterviewPage() {
               <p className="text-muted-foreground mb-4">
                 Start your voice interview directly in your browser. Requires microphone access.
               </p>
-              <Button onClick={() => setSelectedMode('web')} size="lg">
-                Start Web Interview
+              <Button 
+                onClick={() => setSelectedMode('web')} 
+                disabled={isLoadingConfig || !agentId}
+                size="lg"
+              >
+                {isLoadingConfig ? 'Loading...' : 'Start Web Interview'}
               </Button>
             </div>
           </div>
@@ -169,10 +193,10 @@ export default function VoiceInterviewPage() {
               )}
               <Button 
                 onClick={handleCallNow} 
-                disabled={isCallingNow || !AGENT_ID}
+                disabled={isCallingNow || !agentId || isLoadingConfig}
                 size="lg"
               >
-                {isCallingNow ? 'Calling...' : `Call ${TEST_PHONE_NUMBER}`}
+                {isCallingNow ? 'Calling...' : isLoadingConfig ? 'Loading...' : `Call ${TEST_PHONE_NUMBER}`}
               </Button>
             </div>
           </div>
