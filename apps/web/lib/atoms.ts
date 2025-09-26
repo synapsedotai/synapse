@@ -86,8 +86,8 @@ export const mockAdminLogin = (): Promise<GoogleOAuthResponse> => {
     setTimeout(() => {
       resolve({
         id: 'admin123',
-        name: 'Admin User',
-        email: 'admin@synapse.com',
+        name: 'Sarah Chen',
+        email: 'sarah.chen@synapse.com',
         picture: 'https://via.placeholder.com/40x40'
       });
     }, 1000);

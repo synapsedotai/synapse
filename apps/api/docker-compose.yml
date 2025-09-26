@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  synapse-api:
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      # Database configuration - uncomment and configure as needed
+      # - DATABASE_URL=postgresql://user:password@host:port/database
+      # - SUPABASE_URL=https://your-project.supabase.co
+      # - SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+      # - SUPABASE_DB_URL=postgresql://postgres:password@db.your-project.supabase.co:5432/postgres
+      
+      # AI/ML configuration - uncomment and configure as needed
+      # - ANTHROPIC_API_KEY=your-anthropic-key
+      # - ANTHROPIC_EMBED_MODEL=claude-embed
+      # - ANTHROPIC_TOPIC_MODEL=claude-3-5-sonnet-latest
+      # - OPENAI_API_KEY=your-openai-key
+      # - OPENAI_EMBED_MODEL=text-embedding-3-small
+      
+      # Feature flags
+      - EMBED_MOCK=false
+      - EMBED_FALLBACK=false
+      - RETENTION_DAYS=90
+    healthcheck:
+      test: ["CMD", "bun", "run", "-e", "fetch('http://localhost:4000/healthz').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    # Uncomment to add volume mounts for persistent data
+    # volumes:
+    #   - ./data:/app/data
+    
+  # Uncomment to add a local PostgreSQL database
+  # postgres:
+  #   image: postgres:15
+  #   environment:
+  #     - POSTGRES_DB=synapse
+  #     - POSTGRES_USER=synapse
+  #     - POSTGRES_PASSWORD=synapse_password
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U synapse -d synapse"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+# Uncomment if using local PostgreSQL
+# volumes:
+#   postgres_data:

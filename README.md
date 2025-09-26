@@ -1,5 +1,8 @@
 # Synapse
 
+[![Frontend Status](https://img.shields.io/badge/Frontend-Online-brightgreen?style=flat-square&logo=nextdotjs)](https://synapse.elia.vc/)
+[![Backend Status](https://img.shields.io/badge/Backend-Online-brightgreen?style=flat-square&logo=typescript)](https://api.synapse.elia.vc/)
+
 Synapse Monorepo based on [Turborepo](https://turborepo.com).
 
 ## Stack
@@ -8,11 +11,15 @@ Synapse Monorepo based on [Turborepo](https://turborepo.com).
 
 The Synapse frontend uses [Next.js](https://nextjs.org/) with [TailwindCSS](https://tailwindcss.com/), [Jotai](https://jotai.org/), and is deployed on [Cloudflare Workers](https://workers.cloudflare.com/) via [OpenNext](https://opennext.js.org/).
 
+It's deployed at [synapse.elia.vc](https://synapse.elia.vc).
+
 Icons are from [Heroicons](https://heroicons.com/).
 
 ### Backend
 
-The Synapse backend uses [Express.js](https://expressjs.com/) with [Prisma](https://www.prisma.io/) as ORM & [PostgreSQL](https://www.postgresql.org/) (via Supabase) as DB.
+The Synapse backend uses [Express.js](https://expressjs.com/) with [Prisma](https://www.prisma.io/) as ORM & [PostgreSQL](https://www.postgresql.org/) (via Supabase) as DB, deployed via [Coolify](https://coolify.io).
+
+It's deployed at [api.synapse.elia.vc](https://api.synapse.elia.vc).
 
 ### Apps and Packages
 

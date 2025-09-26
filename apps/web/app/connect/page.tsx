@@ -18,6 +18,7 @@ import {
   ClockIcon,
   BuildingOfficeIcon,
   UserGroupIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Loader } from "lucide-react";
 
@@ -44,6 +45,8 @@ export default function ConnectPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
   const [redirectCountdown, setRedirectCountdown] = useState(0);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom when messages change
@@ -63,6 +66,14 @@ export default function ConnectPage() {
     setMessages([]);
     setSelectedEmployee(null);
     setRedirectCountdown(0);
+    setSelectedTimeSlot(null);
+    setShowConfirmation(false);
+  };
+
+  const handleScheduleMeeting = () => {
+    if (selectedTimeSlot) {
+      setShowConfirmation(true);
+    }
   };
 
   const handleSendMessage = async (text?: string) => {
@@ -263,6 +274,30 @@ Never rush to match. A good understanding saves time.`,
     handleSendMessage(prompt);
   };
 
+  if (showConfirmation) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <Card className="border-black/10 bg-[#eeebe3]/50 p-8">
+            <div className="text-center">
+              <CheckCircleIcon className="h-16 w-16 mx-auto mb-4 text-black" />
+              <h1 className="text-2xl font-bold mb-2">Meeting Confirmed</h1>
+              <p className="text-muted-foreground mb-4">
+                Your meeting with {selectedEmployee?.name || 'the expert'} has been scheduled for {selectedTimeSlot}.
+              </p>
+              <p className="text-sm text-muted-foreground mb-6">
+                You'll receive a calendar invitation shortly.
+              </p>
+              <Button onClick={handleReset} className="bg-black hover:bg-gray-800">
+                Schedule Another Meeting
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   if (showProfile) {
     return (
       <div className="flex h-full flex-col p-8">
@@ -346,6 +381,7 @@ Never rush to match. A good understanding saves time.`,
                 </p>
                 <div className="grid gap-2">
                   {[
+                    "Tomorrow, 4:00 PM",
                     "Tomorrow, 2:00 PM",
                     "Thursday, 10:00 AM",
                     "Thursday, 3:00 PM",
@@ -353,8 +389,13 @@ Never rush to match. A good understanding saves time.`,
                   ].map((time) => (
                     <Button
                       key={time}
-                      variant="outline"
-                      className="justify-start gap-2 border-black/20"
+                      variant={selectedTimeSlot === time ? "default" : "outline"}
+                      className={`justify-start gap-2 border-black/20 ${
+                        selectedTimeSlot === time 
+                          ? "bg-black text-white" 
+                          : "hover:bg-black hover:text-white"
+                      }`}
+                      onClick={() => setSelectedTimeSlot(time)}
                     >
                       <ClockIcon className="h-4 w-4" />
                       {time}
@@ -363,8 +404,20 @@ Never rush to match. A good understanding saves time.`,
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-black/10">
-                <Button className="w-full gap-2">
+              {selectedTimeSlot && (
+                <div className="pt-4 border-t border-black/10">
+                  <Button 
+                    className="w-full gap-2 bg-black hover:bg-gray-800"
+                    onClick={handleScheduleMeeting}
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                    Schedule Meeting for {selectedTimeSlot}
+                  </Button>
+                </div>
+              )}
+              
+              <div className={`${selectedTimeSlot ? 'pt-2' : 'pt-4 border-t border-black/10'}`}>
+                <Button variant="outline" className="w-full gap-2">
                   <CalendarIcon className="h-4 w-4" />
                   Request Custom Time
                 </Button>
