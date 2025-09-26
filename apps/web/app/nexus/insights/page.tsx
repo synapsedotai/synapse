@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,23 @@ import {
 
 // HR Risk Intelligence - Knowledge retention alerts
 const hrRiskAlerts = [
+  {
+    name: "Nick Expert",
+    role: "DevOps Engineer",
+    department: "Infrastructure Team",
+    risk: "Critical",
+    severity: "Immediate",
+    meetings: 87,
+    currentComp: 180000,
+    marketAverage: 220000,
+    compGap: -40000,
+    retirementRisk: true,
+    age: 64,
+    knowledgeAreas: ["Kubernetes", "CI/CD", "AWS", "Docker", "Monitoring", "Infrastructure", "Deployment", "Legacy Systems"],
+    impactRating: 98,
+    lastRaise: "24 months ago",
+    tenure: "10 years"
+  },
   {
     name: "Sarah Martinez",
     role: "Senior Data Architect", 
@@ -94,9 +112,34 @@ const hrRiskAlerts = [
 ];
 
 export default function NexusInsights() {
+  const searchParams = useSearchParams();
+  const highlightParam = searchParams.get('highlight');
   const [resolvedAlerts, setResolvedAlerts] = useState<string[]>([]);
   const [detailModal, setDetailModal] = useState<{open: boolean, person: any}>({open: false, person: null});
   const [resolutionNote, setResolutionNote] = useState("");
+  const [highlightedPerson, setHighlightedPerson] = useState<string | null>(null);
+  
+  // Set highlighted person based on URL parameter
+  useEffect(() => {
+    if (highlightParam) {
+      // Convert the URL-safe ID back to a name for matching
+      setHighlightedPerson(highlightParam);
+      
+      // Auto-scroll to the highlighted person after a short delay
+      setTimeout(() => {
+        const element = document.getElementById(`person-${highlightParam}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Add a pulse animation effect
+          element.classList.add('animate-pulse');
+          setTimeout(() => {
+            element.classList.remove('animate-pulse');
+          }, 2000);
+        }
+      }, 100);
+    }
+  }, [highlightParam]);
 
   const handleViewMore = (person: any) => {
     setDetailModal({open: true, person});
@@ -130,7 +173,7 @@ export default function NexusInsights() {
             <FireIcon className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-700">1</div>
+            <div className="text-2xl font-bold text-red-700">2</div>
             <p className="text-xs text-red-600">
               Immediate action required
             </p>
@@ -176,8 +219,18 @@ export default function NexusInsights() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {activeAlerts.map((person) => (
-            <div key={person.name} className="p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
+          {activeAlerts.map((person) => {
+            const personId = person.name.toLowerCase().replace(/\s+/g, '-');
+            const isHighlighted = highlightedPerson === personId;
+            
+            return (
+            <div 
+              key={person.name} 
+              id={`person-${personId}`}
+              className={`p-4 border rounded-lg bg-white hover:bg-gray-50 transition-all duration-300 ${
+                isHighlighted ? 'ring-2 ring-blue-500 ring-offset-2 shadow-lg bg-blue-50 hover:bg-blue-100' : ''
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1">
                   <Avatar className="h-8 w-8">
@@ -251,7 +304,8 @@ export default function NexusInsights() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 
@@ -287,7 +341,7 @@ export default function NexusInsights() {
               <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
                 <Avatar className="h-12 w-12">
                   <AvatarFallback className="bg-white text-gray-700 font-semibold">
-                    {detailModal.person.name.split(' ').map(n => n[0]).join('')}
+                    {detailModal.person.name.split(' ').map((n: string) => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
                 <div>
@@ -329,7 +383,7 @@ export default function NexusInsights() {
               <div>
                 <div className="text-sm font-semibold mb-2">Critical Knowledge Areas</div>
                 <div className="flex flex-wrap gap-1">
-                  {detailModal.person.knowledgeAreas.map((area) => (
+                  {detailModal.person.knowledgeAreas.map((area: string) => (
                     <Badge key={area} variant="secondary" className="text-xs">
                       {area}
                     </Badge>

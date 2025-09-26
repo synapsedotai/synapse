@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { ProfileCard } from './profile-card';
 import { HoverTooltip } from './hover-tooltip';
+import { fetchKnowledgeGraph } from '@/app/actions/graph';
 
 // Dynamically import ForceGraph3D to avoid SSR issues
 const ForceGraph3D = dynamic(() => import('3d-force-graph').then(mod => mod.default), {
@@ -53,6 +54,65 @@ interface GraphData {
   nodes: GraphNode[];
   links: GraphLink[];
 }
+
+// Fetch knowledge graph data from API via server action
+const fetchKnowledgeData = async (): Promise<{ data: GraphData; categories?: string[] }> => {
+  try {
+    const data = await fetchKnowledgeGraph();
+    
+    // Map expertise categories to group numbers for coloring
+    const expertiseToGroup: Record<string, number> = {
+      'Frontend': 0,
+      'Backend': 1,
+      'Database': 2,
+      'Cloud/DevOps': 3,
+      'AI/ML': 4,
+      'Mobile': 5,
+      'Security': 6,
+      'Architecture': 7
+    };
+    
+    // Transform API data to our GraphData format
+    const nodes: GraphNode[] = data.nodes.map((node: any, index: number) => ({
+      id: node.id,
+      name: node.label,
+      group: expertiseToGroup[node.primaryExpertise] ?? 0, // Group by primary expertise
+      value: Math.max(8, Math.min(25, node.score / 4)), // Node size based on score
+      profile: {
+        role: node.primaryExpertise || 'Knowledge Expert',
+        department: node.primaryExpertise || 'Various',
+        level: `Expertise Score: ${node.score}`,
+        email: `${node.label.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+        age: 30 + Math.floor(Math.random() * 30),
+        compensation: 'N/A',
+        startDate: '2020',
+        location: 'Various',
+        reports: 0,
+        knowledgeDomains: node.expertise || [],
+        impactRating: Math.min(100, node.score),
+        expertMeetings: Math.floor(node.score * 0.8),
+        retentionRisk: node.score > 70 ? 'Critical' : node.score > 50 ? 'High' : node.score > 30 ? 'Medium' : 'Low',
+        riskFactors: node.score > 70 ? ['Top expert in field', 'Key knowledge holder'] : node.score > 50 ? ['High expertise score'] : [],
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${node.label.replace(' ', '-')}`
+      }
+    }));
+    
+    const links: GraphLink[] = data.edges.map((edge: any) => ({
+      source: edge.source,
+      target: edge.target,
+      value: Math.max(1, Math.min(5, edge.weight * 3)),
+      type: 'collaboration'
+    }));
+    
+    return { 
+      data: { nodes, links },
+      categories: data.expertiseCategories
+    };
+  } catch (error) {
+    console.error('Failed to fetch knowledge data:', error);
+    return { data: { nodes: [], links: [] } };
+  }
+};
 
 // Generate organizational chart data
 const generateSampleData = (): GraphData => {
@@ -175,6 +235,37 @@ const generateSampleData = (): GraphData => {
     csuiteIds.push(nodeId++);
   }
 
+  // Add Nick Expert - the DevOps guy with many connections who's retiring soon
+  nodes.push({
+    id: `node-${nodeId}`,
+    name: 'Nick Expert',
+    group: 5,  // Lower level (Mid IC) but highly connected
+    value: 18, // Larger node due to importance
+    profile: {
+      role: 'DevOps Engineer',
+      department: 'Infrastructure Team',
+      level: levels[5], // Mid IC level
+      email: 'nick.expert@example.com',
+      age: 64, // Near retirement
+      compensation: '$180K-220K',
+      startDate: 'Jan 2015', // Long tenure
+      location: 'San Francisco',
+      reports: 0,
+      knowledgeDomains: ['Kubernetes', 'CI/CD', 'AWS', 'Docker', 'Monitoring', 'Infrastructure', 'Deployment', 'Legacy Systems'],
+      impactRating: 98, // Extremely high impact
+      expertMeetings: 87, // Very high number of expert meetings
+      retentionRisk: 'Critical',
+      riskFactors: [
+        'Retirement eligible (64 years)',
+        'Key knowledge holder for legacy systems',
+        'Critical infrastructure expertise',
+        'No documented succession plan'
+      ],
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=nick-expert22`
+    }
+  });
+  const nickExpertId = nodeId++;
+  
   // Create Directors
   const directorIds: number[] = [];
   const directorNames = [
@@ -353,6 +444,27 @@ const generateSampleData = (): GraphData => {
   }
 
 
+  // Create Nick Expert's many connections (12 connections as requested)
+  // He's a critical knowledge holder who connects across all levels
+  const nickConnections = [
+    csuiteIds[0], // Connect to CTO
+    csuiteIds[1], // Connect to CFO
+    ...directorIds.slice(0, 3), // Connect to first 3 directors
+    ...seniorManagerIds.slice(0, 3), // Connect to some senior managers
+    ...teamLeadIds.slice(0, 4) // Connect to some team leads
+  ];
+  
+  nickConnections.forEach((targetId) => {
+    if (targetId !== undefined) {
+      links.push({
+        source: `node-${nickExpertId}`,
+        target: `node-${targetId}`,
+        value: 2,
+        type: 'call'
+      });
+    }
+  });
+
   // Add call connections (green pulsing cross-team calls)
   // Focus on same-level, different team connections
   
@@ -429,6 +541,8 @@ export function InsightsGraph() {
   const [hoveredProfile, setHoveredProfile] = useState<any>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [chartType, setChartType] = useState<'org' | 'knowledge'>('org');
+  const [expertiseCategories, setExpertiseCategories] = useState<string[]>([]);
 
   useEffect(() => {
     setIsClient(true);
@@ -449,23 +563,55 @@ export function InsightsGraph() {
   useEffect(() => {
     if (!graphRef.current || !isClient || !ForceGraph3DComponent) return;
 
-    // Generate sample data
-    const data = generateSampleData();
+    // Clean up any existing graph instance first
+    if (forceGraphRef.current && forceGraphRef.current._destructor) {
+      forceGraphRef.current._destructor();
+      forceGraphRef.current = null;
+    }
+
+    // Load data based on chart type
+    const loadGraphData = async () => {
+      let data: GraphData;
+      
+      if (chartType === 'org') {
+        data = generateSampleData();
+        setExpertiseCategories([]); // Clear categories for org chart
+      } else {
+        const result = await fetchKnowledgeData();
+        data = result.data;
+        setExpertiseCategories(result.categories || []);
+      }
     
-    // Position nodes vertically based on hierarchy - executives at top!
-    data.nodes.forEach((node: any) => {
-      // Fix Y position based on hierarchy level (fy = fixed Y)
-      const hierarchyY = [300, 200, 100, 0, -100, -200, -300]; // CEO at top (300), juniors at bottom (-300)
-      node.fy = hierarchyY[node.group] || 0; // Fix Y position so it doesn't move vertically
-      
-      // Allow X and Z to move freely for natural spread
-      node.fx = undefined; // Allow X movement
-      node.fz = undefined; // Allow Z movement
-      
-      // Shift the spread to the left to center it better in viewport
-      node.x = (Math.random() - 0.5) * 150 - 100; // Shift left by 100 units
-      node.z = (Math.random() - 0.5) * 150; // Keep Z centered
-    });
+      // Position nodes based on chart type
+      if (chartType === 'org') {
+        // Position nodes vertically based on hierarchy - executives at top!
+        data.nodes.forEach((node: any) => {
+          // Fix Y position based on hierarchy level (fy = fixed Y)
+          const hierarchyY = [300, 200, 100, 0, -100, -200, -300]; // CEO at top (300), juniors at bottom (-300)
+          node.fy = hierarchyY[node.group] || 0; // Fix Y position so it doesn't move vertically
+          
+          // Allow X and Z to move freely for natural spread
+          node.fx = undefined; // Allow X movement
+          node.fz = undefined; // Allow Z movement
+          
+          // Shift the spread to the left to center it better in viewport
+          node.x = (Math.random() - 0.5) * 150 - 100; // Shift left by 100 units
+          node.z = (Math.random() - 0.5) * 150; // Keep Z centered
+        });
+      } else {
+        // For knowledge graph, use a more organic layout
+        data.nodes.forEach((node: any) => {
+          // Let all nodes move freely in 3D space
+          node.fx = undefined;
+          node.fy = undefined; 
+          node.fz = undefined;
+          
+          // Random initial positions
+          node.x = (Math.random() - 0.5) * 200;
+          node.y = (Math.random() - 0.5) * 200;
+          node.z = (Math.random() - 0.5) * 200;
+        });
+      }
     
     // Create the 3D force graph - keep it simple!
     const graph = ForceGraph3DComponent()(graphRef.current)
@@ -487,13 +633,8 @@ export function InsightsGraph() {
       })
       .linkColor((link: any) => {
         if (link.type === 'call') {
-          // Create pulsing bright neon green effect for call links
-          const time = Date.now() * 0.004;
-          const pulse = Math.sin(time) * 0.2 + 0.8; // Oscillate between 0.6 and 1.0 (brighter)
-          // Bright neon green that pulses
-          const green = Math.floor((220 + 35 * pulse)); // Range from 220 to 255 (very bright)
-          const red = Math.floor((10 + 20 * pulse)); // Range from 10 to 30 (minimal red)
-          return `rgb(${red}, ${green}, 10)`; // Bright pulsing neon green
+          // Bright neon green for call links
+          return '#00FF00'; // Bright green
         }
         return '#F3F4F6'; // Very light gray for hierarchy (really subtle)
       })
@@ -528,18 +669,34 @@ export function InsightsGraph() {
         }
       });
 
-    // Customize node colors based on organizational level
+    // Customize node colors based on chart type
     graph.nodeColor((node: any) => {
-      const colors = [
-        '#8B5CF6', // Leadership (CEO/C-Suite) - Purple
-        '#EF4444', // Directors - Red
-        '#F59E0B', // Senior Managers - Orange
-        '#10B981', // Team Leads - Green
-        '#3B82F6', // Senior ICs - Blue
-        '#6366F1', // Mid ICs - Indigo
-        '#8B5A2B'  // Junior ICs - Brown
-      ];
-      return colors[node.group] || '#8B5CF6';
+      if (chartType === 'org') {
+        // Organizational colors
+        const colors = [
+          '#8B5CF6', // Leadership (CEO/C-Suite) - Purple
+          '#EF4444', // Directors - Red
+          '#F59E0B', // Senior Managers - Orange
+          '#10B981', // Team Leads - Green
+          '#3B82F6', // Senior ICs - Blue
+          '#6366F1', // Mid ICs - Indigo
+          '#8B5A2B'  // Junior ICs - Brown
+        ];
+        return colors[node.group] || '#8B5CF6';
+      } else {
+        // Knowledge/expertise colors
+        const colors = [
+          '#8B5CF6', // Frontend - Purple
+          '#EF4444', // Backend - Red
+          '#F59E0B', // Database - Orange
+          '#10B981', // Cloud/DevOps - Green
+          '#3B82F6', // AI/ML - Blue
+          '#6366F1', // Mobile - Indigo
+          '#EC4899', // Security - Pink
+          '#14B8A6'  // Architecture - Teal
+        ];
+        return colors[node.group % colors.length] || '#8B5CF6';
+      }
     });
 
     // Store reference for cleanup
@@ -576,27 +733,19 @@ export function InsightsGraph() {
         }
       }
     }, 100);
-
-    // Animation loop for pulsing call links
-    let animationId: number;
-    const animate = () => {
-      if (forceGraphRef.current) {
-        forceGraphRef.current.refresh(); // Trigger re-render to update colors
-      }
-      animationId = requestAnimationFrame(animate);
     };
-    animate();
+
+    // Call the async function
+    loadGraphData();
 
     // Cleanup function
     return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-      if (forceGraphRef.current) {
-        forceGraphRef.current._destructor?.();
+      if (forceGraphRef.current && forceGraphRef.current._destructor) {
+        forceGraphRef.current._destructor();
+        forceGraphRef.current = null; // Clear reference to prevent double cleanup
       }
     };
-  }, [isClient, ForceGraph3DComponent]);
+  }, [isClient, ForceGraph3DComponent, chartType]);
 
   if (!isClient || !ForceGraph3DComponent) {
     return (
@@ -622,33 +771,79 @@ export function InsightsGraph() {
         style={{ minHeight: '500px' }}
       />
       
-      
-      {/* Legend */}
-      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-sm border">
-        <h3 className="text-sm font-semibold mb-2 text-gray-900">Organizational Levels</h3>
-        <div className="space-y-1">
-          {[
-            'Leadership (CEO/C-Suite)',
-            'Directors & VPs', 
-            'Senior Managers',
-            'Team Leads',
-            'Senior ICs',
-            'Mid-level ICs',
-            'Junior ICs'
-          ].map((level, index) => {
-            const colors = ['#8B5CF6', '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5A2B'];
-            return (
-              <div key={level} className="flex items-center gap-2 text-xs">
-                <div 
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: colors[index] }}
-                />
-                <span className="text-gray-700">{level}</span>
-              </div>
-            );
-          })}
+      {/* Chart Type Toggle */}
+      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 shadow-sm border">
+        <div className="flex gap-1">
+          <button
+            onClick={() => setChartType('org')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              chartType === 'org' 
+                ? 'bg-gray-900 text-white' 
+                : 'bg-transparent text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Org Chart
+          </button>
+          <button
+            onClick={() => setChartType('knowledge')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              chartType === 'knowledge' 
+                ? 'bg-gray-900 text-white' 
+                : 'bg-transparent text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Knowledge Chart
+          </button>
         </div>
       </div>
+      
+      {/* Legend - show different legend based on chart type */}
+      {chartType === 'org' ? (
+        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-sm border">
+          <h3 className="text-sm font-semibold mb-2 text-gray-900">Organizational Levels</h3>
+          <div className="space-y-1">
+            {[
+              'Leadership (CEO/C-Suite)',
+              'Directors & VPs', 
+              'Senior Managers',
+              'Team Leads',
+              'Senior ICs',
+              'Mid-level ICs',
+              'Junior ICs'
+            ].map((level, index) => {
+              const colors = ['#8B5CF6', '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5A2B'];
+              return (
+                <div key={level} className="flex items-center gap-2 text-xs">
+                  <div 
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: colors[index] }}
+                  />
+                  <span className="text-gray-700">{level}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : chartType === 'knowledge' && expertiseCategories.length > 0 && (
+        <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-4 shadow-sm border">
+          <h3 className="text-sm font-semibold mb-2 text-gray-900">Expertise Areas</h3>
+          <div className="space-y-1">
+            {expertiseCategories.map((category, index) => {
+              // Use same colors as node coloring
+              const colors = ['#8B5CF6', '#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#EC4899', '#14B8A6'];
+              return (
+                <div key={category} className="flex items-center gap-2 text-xs">
+                  <div 
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: colors[index % colors.length] }}
+                  />
+                  <span className="text-gray-700">{category}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       
       {/* Hover Tooltip */}

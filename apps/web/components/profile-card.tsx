@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -12,7 +13,8 @@ import {
   DialogOverlay,
   DialogPortal,
 } from "@/components/ui/dialog";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { ExclamationTriangleIcon, ArrowRightIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
 
 interface ProfileData {
   id: string;
@@ -41,6 +43,8 @@ interface ProfileCardProps {
 }
 
 export function ProfileCard({ profile, open, onClose }: ProfileCardProps) {
+  const router = useRouter();
+  
   if (!profile) return null;
 
   const riskColor = {
@@ -49,6 +53,13 @@ export function ProfileCard({ profile, open, onClose }: ProfileCardProps) {
     'High': 'bg-orange-100 text-orange-800',
     'Critical': 'bg-red-100 text-red-800'
   }[profile.retentionRisk];
+  
+  const handleViewRetentionStrategy = () => {
+    onClose();
+    // Use a URL-safe version of the name as the highlight parameter
+    const highlightId = profile.name.toLowerCase().replace(/\s+/g, '-');
+    router.push(`/nexus/insights?highlight=${highlightId}`);
+  };
 
   const impactColor = profile.impactRating >= 80 ? 'bg-green-100 text-green-800' :
                      profile.impactRating >= 60 ? 'bg-blue-100 text-blue-800' :
@@ -180,11 +191,24 @@ export function ProfileCard({ profile, open, onClose }: ProfileCardProps) {
                 <Badge className={`${riskColor} mb-2`}>
                   {profile.retentionRisk} Risk
                 </Badge>
-                <div className="text-xs text-gray-600 space-y-1">
+                <div className="text-xs text-gray-600 space-y-1 mb-3">
                   {profile.riskFactors.map((factor, index) => (
                     <div key={index}>• {factor}</div>
                   ))}
                 </div>
+                
+                {/* Show more details button for high-risk employees like Nick Expert */}
+                {(profile.name === 'Nick Expert' || profile.retentionRisk === 'Critical') && (
+                  <Button 
+                    onClick={handleViewRetentionStrategy}
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-2 group"
+                  >
+                    <span>More Details</span>
+                    <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                )}
               </div>
             </>
           )}
