@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { callUser, scheduleWeeklyCall } from "@/lib/actions/call";
 import { VoiceInterview } from "@/components/voice-interview";
 import { useAtom } from "jotai";
@@ -22,7 +23,6 @@ import {
 
 // Constants for the agent configuration
 const AGENT_PHONE_NUMBER_ID = 'phnum_0601k600gn01eyz9e9w49g2fzq97';
-const TEST_PHONE_NUMBER = '+4915738255718';
 
 export default function VoiceInterviewPage() {
   const router = useRouter();
@@ -34,12 +34,13 @@ export default function VoiceInterviewPage() {
   // State for immediate call
   const [isCallingNow, setIsCallingNow] = useState(false);
   const [callMessage, setCallMessage] = useState<string | null>(null);
-
-  console.log(process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID);
+  
+  // State for phone number management
+  const [phoneNumber, setPhoneNumber] = useState('+4915738255718');
+  const [tempPhoneNumber, setTempPhoneNumber] = useState('+4915738255718');
+  const [showPhoneDialog, setShowPhoneDialog] = useState(false);
   
   // State for weekly scheduling
-  const [phoneNumber, setPhoneNumber] = useState('+491794910770');
-  const [isEditingPhone, setIsEditingPhone] = useState(false);
   const [preferredTime, setPreferredTime] = useState('09:00');
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleMessage, setScheduleMessage] = useState<string | null>(null);
@@ -76,13 +77,13 @@ export default function VoiceInterviewPage() {
 
     try {
       const result = await callUser({
-        phoneNumber: TEST_PHONE_NUMBER,
+        phoneNumber: phoneNumber,
         agentId: agentId,
         agentPhoneNumberId: AGENT_PHONE_NUMBER_ID,
       });
 
       if (result.success) {
-        setCallMessage(`Call initiated! Check your phone at ${TEST_PHONE_NUMBER}`);
+        setCallMessage(`Call initiated! Check your phone at ${phoneNumber}`);
       } else {
         setCallMessage(`Failed to initiate call: ${result.message}`);
       }
@@ -90,6 +91,13 @@ export default function VoiceInterviewPage() {
       setCallMessage('Failed to initiate call. Please try again.');
     } finally {
       setIsCallingNow(false);
+    }
+  };
+
+  const handlePhoneNumberSave = () => {
+    if (tempPhoneNumber.trim()) {
+      setPhoneNumber(tempPhoneNumber.trim());
+      setShowPhoneDialog(false);
     }
   };
 
@@ -147,6 +155,53 @@ export default function VoiceInterviewPage() {
         </p>
       </div>
 
+      {/* Phone Number Management */}
+      <Card className="p-4 mb-6 bg-[#eeebe3]/30 max-w-4xl mx-auto w-full">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium">Phone Number</p>
+            <p className="text-muted-foreground">{phoneNumber}</p>
+          </div>
+          <Dialog open={showPhoneDialog} onOpenChange={setShowPhoneDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" onClick={() => setTempPhoneNumber(phoneNumber)}>
+                <PencilIcon className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Update Phone Number</DialogTitle>
+                <DialogDescription>
+                  This number will be used for both immediate calls and scheduled weekly calls.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="temp-phone">Phone Number</Label>
+                  <Input
+                    id="temp-phone"
+                    type="tel"
+                    placeholder="+1234567890"
+                    value={tempPhoneNumber}
+                    onChange={(e) => setTempPhoneNumber(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowPhoneDialog(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handlePhoneNumberSave}>
+                  Save
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </Card>
+
       <div className="flex-1 flex flex-col max-w-4xl mx-auto w-full space-y-6">
         
         {/* Option 1: Web-based Voice */}
@@ -198,7 +253,7 @@ export default function VoiceInterviewPage() {
                 disabled={isCallingNow || !agentId || isLoadingConfig}
                 size="lg"
               >
-                {isCallingNow ? 'Calling...' : isLoadingConfig ? 'Loading...' : `Call ${TEST_PHONE_NUMBER}`}
+                {isCallingNow ? 'Calling...' : isLoadingConfig ? 'Loading...' : `Call ${phoneNumber}`}
               </Button>
             </div>
           </div>
@@ -223,31 +278,16 @@ export default function VoiceInterviewPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="phone">Phone Number</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="phone"
-                        type="tel"
-                        placeholder="+1234567890"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        disabled={!isEditingPhone}
-                        className={!isEditingPhone ? 'bg-gray-50' : ''}
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsEditingPhone(!isEditingPhone)}
-                        className="px-3"
-                      >
-                        {isEditingPhone ? (
-                          <CheckIcon className="w-4 h-4" />
-                        ) : (
-                          <PencilIcon className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      value={phoneNumber}
+                      disabled
+                      className="bg-gray-50"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Use the edit button above to change your phone number
+                    </p>
                   </div>
                   <div>
                     <Label htmlFor="time">Preferred Time</Label>
