@@ -139,7 +139,7 @@ export default function ConnectPage() {
 
       // Stream the response with tools
       const result = streamText({
-        model: openrouter("openai/gpt-4o-2024-11-20"),
+        model: openrouter("anthropic/claude-3.5-sonnet"),
         messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content })),
         system: `You're chatting with Joe Raft. You're a helpful connector for colleagues.
 

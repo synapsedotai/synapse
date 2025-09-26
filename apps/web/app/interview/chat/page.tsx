@@ -135,7 +135,7 @@ export default function InterviewPage() {
 
       // Stream the response with tools and multi-step handling
       const result = streamText({
-        model: openrouter("openai/gpt-4o-2024-11-20"),
+        model: openrouter("anthropic/claude-3.5-sonnet"),
         messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content })),
         system: `You're chatting with Joe Raft. You're a weekly reflection partner focused on extracting actionable insights.
 
