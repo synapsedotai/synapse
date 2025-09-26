@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -111,16 +110,20 @@ const hrRiskAlerts = [
   }
 ];
 
-function NexusInsightsContent() {
-  const searchParams = useSearchParams();
-  const highlightParam = searchParams.get('highlight');
+export default function NexusInsights() {
   const [resolvedAlerts, setResolvedAlerts] = useState<string[]>([]);
   const [detailModal, setDetailModal] = useState<{open: boolean, person: any}>({open: false, person: null});
   const [resolutionNote, setResolutionNote] = useState("");
   const [highlightedPerson, setHighlightedPerson] = useState<string | null>(null);
   
-  // Set highlighted person based on URL parameter
+  // Set highlighted person based on URL parameter - using window.location for OpenNext compatibility
   useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
+    const params = new URLSearchParams(window.location.search);
+    const highlightParam = params.get('highlight');
+    
     if (highlightParam) {
       // Convert the URL-safe ID back to a name for matching
       setHighlightedPerson(highlightParam);
@@ -139,7 +142,7 @@ function NexusInsightsContent() {
         }
       }, 100);
     }
-  }, [highlightParam]);
+  }, []);
 
   const handleViewMore = (person: any) => {
     setDetailModal({open: true, person});
@@ -427,56 +430,5 @@ function NexusInsightsContent() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-// Loading fallback component
-function InsightsLoading() {
-  return (
-    <div className="p-8 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">HR Intelligence</h1>
-        <p className="text-muted-foreground">
-          Knowledge retention risks and strategic talent insights
-        </p>
-      </div>
-      
-      <div className="grid gap-4 md:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader className="space-y-2">
-              <div className="h-4 bg-gray-200 rounded w-24"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 bg-gray-200 rounded w-12 mb-2"></div>
-              <div className="h-3 bg-gray-200 rounded w-32"></div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      
-      <Card className="border-black/10">
-        <CardHeader>
-          <div className="h-6 bg-gray-200 rounded w-48 mb-2"></div>
-          <div className="h-4 bg-gray-200 rounded w-64"></div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="p-4 border rounded-lg bg-white">
-              <div className="h-20 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// Main export with Suspense boundary
-export default function NexusInsights() {
-  return (
-    <Suspense fallback={<InsightsLoading />}>
-      <NexusInsightsContent />
-    </Suspense>
   );
 }
