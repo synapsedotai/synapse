@@ -21,6 +21,11 @@ The Synapse backend uses [Express.js](https://expressjs.com/) with [Prisma](http
 
 It's deployed at [api.synapse.elia.vc](https://api.synapse.elia.vc).
 
+Claude + AI usage (backend):
+- Topic extraction: Anthropic Claude (Haiku) via Messages API, returning normalized topics + confidence
+- Agentic reasoning: Claude (Sonnet) ranks experts (score × freshness) and powers the matchmaker orchestration
+- Embeddings: OpenAI embeddings API; semantic chunking improves recall; vectors stored in pgvector
+
 ### Apps and Packages
 
 - `web`: a [Next.js](https://nextjs.org/) frontend
@@ -30,10 +35,17 @@ It's deployed at [api.synapse.elia.vc](https://api.synapse.elia.vc).
 
 Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
 
-### Utilities
 
-This repository has the following utilities set up:
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+## For Judges (Anthropic Hackathon)
+
+- Live MVP with connected frontend and backend
+  - Frontend: https://synapse.elia.vc/
+  - Backend: https://api.synapse.elia.vc/
+- What it does
+  - Friday check-ins → Claude (topics, summaries) → employee profiles
+  - Search → semantic chunking + OpenAI embeddings + pgvector
+  - Expert Matchmaker agent → Claude reasoning to rank experts; auto-scheduling meetings
+- Verify quickly
+  - Health: https://api.synapse.elia.vc/healthz
+  - API contracts and curl examples: `apps/api/README.md`
