@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 interface CloudflareEnv {
   ELEVENLABS_AGENT_ID?: string;
   ELEVENLABS_API_KEY?: string;
+  OPENROUTER_API_KEY?: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -13,7 +14,8 @@ export async function GET(request: NextRequest) {
     
     // For Cloudflare Workers deployment, we need to access env through the context
     // This will work both locally and in production
-    const agentId = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
+    const agentId = process.env.ELEVENLABS_AGENT_ID;
+    const openrouterApiKey = process.env.OPENROUTER_API_KEY || process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
     
     if (!agentId) {
       return NextResponse.json(
@@ -22,9 +24,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (!openrouterApiKey) {
+      return NextResponse.json(
+        { error: 'OpenRouter API key not configured' },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({
       elevenlabs: {
         agentId: agentId
+      },
+      openrouter: {
+        apiKey: openrouterApiKey
       }
     });
   } catch (error) {

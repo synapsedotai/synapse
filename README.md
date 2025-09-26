@@ -26,6 +26,11 @@ Claude + AI usage (backend):
 - Agentic reasoning: Claude (Sonnet) ranks experts (score × freshness) and powers the matchmaker orchestration
 - Embeddings: OpenAI embeddings API; semantic chunking improves recall; vectors stored in pgvector
 
+Claude + AI usage (frontend):
+- Chat: Sonnet-3.5 via Openrouter & local tool-calls
+- Voice: Elevenlabs (TTS & STT - LLM: Sonnet-3.5)
+- Video: BeyondPresence
+
 ### Apps and Packages
 
 - `web`: a [Next.js](https://nextjs.org/) frontend
@@ -39,13 +44,13 @@ Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
 
 ## For Judges (Anthropic Hackathon)
 
-- Live MVP with connected frontend and backend
+- Live MVP with frontend and backend (complete individually, limited linkage)
   - Frontend: https://synapse.elia.vc/
   - Backend: https://api.synapse.elia.vc/
 - What it does
-  - Friday check-ins → Claude (topics, summaries) → employee profiles
+  - Friday check-ins → Claude (chat, topics, summaries) → employee profiles
   - Search → semantic chunking + OpenAI embeddings + pgvector
-  - Expert Matchmaker agent → Claude reasoning to rank experts; auto-scheduling meetings
+  - Expert Matchmaker agent → Claude reasoning & tool-calling to rank experts, build profile on user & more
 - Verify quickly
   - Health: https://api.synapse.elia.vc/healthz
   - API contracts and curl examples: `apps/api/README.md`

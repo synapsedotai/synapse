@@ -22,9 +22,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { Loader } from "lucide-react";
 
-const openrouter = createOpenRouter({
-  apiKey: process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || "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",
-});
+// OpenRouter client will be initialized after fetching config
+let openrouter: any;
 
 interface Message {
   id: string;
@@ -47,7 +46,31 @@ export default function ConnectPage() {
   const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [configLoaded, setConfigLoaded] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Initialize OpenRouter client with config from API
+  useEffect(() => {
+    const initializeOpenRouter = async () => {
+      try {
+        const response = await fetch('/api/config');
+        const config = await response.json();
+        
+        if (config.openrouter?.apiKey) {
+          openrouter = createOpenRouter({
+            apiKey: config.openrouter.apiKey,
+          });
+          setConfigLoaded(true);
+        } else {
+          console.error('OpenRouter API key not found in config');
+        }
+      } catch (error) {
+        console.error('Failed to load config:', error);
+      }
+    };
+
+    initializeOpenRouter();
+  }, []);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -78,7 +101,7 @@ export default function ConnectPage() {
 
   const handleSendMessage = async (text?: string) => {
     const messageText = text || input.trim();
-    if (!messageText || isLoading) return;
+    if (!messageText || isLoading || !configLoaded) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),

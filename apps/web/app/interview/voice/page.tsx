@@ -36,8 +36,8 @@ export default function VoiceInterviewPage() {
   const [callMessage, setCallMessage] = useState<string | null>(null);
   
   // State for phone number management
-  const [phoneNumber, setPhoneNumber] = useState('+4915738255718');
-  const [tempPhoneNumber, setTempPhoneNumber] = useState('+4915738255718');
+  const [phoneNumber, setPhoneNumber] = useState('+49123123');
+  const [tempPhoneNumber, setTempPhoneNumber] = useState('+49123123');
   const [showPhoneDialog, setShowPhoneDialog] = useState(false);
   
   // State for weekly scheduling
