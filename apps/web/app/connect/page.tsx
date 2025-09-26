@@ -346,6 +346,7 @@ Never rush to match. A good understanding saves time.`,
                 </p>
                 <div className="grid gap-2">
                   {[
+                    "Tomorrow, 4:00 PM",
                     "Tomorrow, 2:00 PM",
                     "Thursday, 10:00 AM",
                     "Thursday, 3:00 PM",
@@ -354,7 +355,7 @@ Never rush to match. A good understanding saves time.`,
                     <Button
                       key={time}
                       variant="outline"
-                      className="justify-start gap-2 border-black/20"
+                      className="justify-start gap-2 border-black/20 hover:bg-black hover:text-white"
                     >
                       <ClockIcon className="h-4 w-4" />
                       {time}
