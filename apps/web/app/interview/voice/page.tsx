@@ -35,7 +35,7 @@ export default function VoiceInterviewPage() {
   const [isCallingNow, setIsCallingNow] = useState(false);
   const [callMessage, setCallMessage] = useState<string | null>(null);
 
-  console.log(process.env.ELEVENLABS_AGENT_ID);
+  console.log(process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID);
   
   // State for weekly scheduling
   const [phoneNumber, setPhoneNumber] = useState('+491794910770');

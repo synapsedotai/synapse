@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     
     // For Cloudflare Workers deployment, we need to access env through the context
     // This will work both locally and in production
-    const agentId = env.ELEVENLABS_AGENT_ID || process.env.ELEVENLABS_AGENT_ID;
+    const agentId = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
     
     if (!agentId) {
       return NextResponse.json(
