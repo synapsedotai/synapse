@@ -14,6 +14,8 @@ graphRouter.get('/api/graph', async (req, res) => {
   const { topic, mode } = parsed.data;
   if (mode === 'knowledge') {
     try {
+      // Original queries preserved but commented out for reference
+      /*
       const nodesBase = await prisma.$queryRaw<Array<{ id: string; name: string; total: number }>>`
         with selected as (
           select e.id, e.name, coalesce(sum(es.score)::float, 0) as total
@@ -50,9 +52,173 @@ graphRouter.get('/api/graph', async (req, res) => {
         having sum(contrib) >= 0.3
         order by weight desc
         limit 300`;
-      const nodes = nodesBase.map(n => ({ id: n.id, label: n.name, score: Number(n.total) }));
-      const edgeObjs = edges.map(e => ({ source: e.a, target: e.b, weight: Number(e.weight), sharedTopics: [] as any[] }));
-      return res.json({ nodes, edges: edgeObjs, insights: { type: 'knowledge' } });
+      */
+
+      // MOCKED DATA FOR BETTER SHOWCASE - Generated on the fly
+      
+      // Define expertise categories and their colors
+      const expertiseCategories = [
+        { name: 'Frontend', skills: ['React', 'Vue', 'Angular', 'TypeScript', 'CSS', 'HTML', 'Next.js', 'Tailwind'] },
+        { name: 'Backend', skills: ['Node.js', 'Python', 'Java', 'Go', 'Rust', 'C#', 'Ruby', 'PHP'] },
+        { name: 'Database', skills: ['PostgreSQL', 'MongoDB', 'Redis', 'Elasticsearch', 'MySQL', 'Cassandra'] },
+        { name: 'Cloud/DevOps', skills: ['AWS', 'Docker', 'Kubernetes', 'Terraform', 'CI/CD', 'Azure', 'GCP'] },
+        { name: 'AI/ML', skills: ['TensorFlow', 'PyTorch', 'NLP', 'Computer Vision', 'LLMs', 'Data Science'] },
+        { name: 'Mobile', skills: ['React Native', 'Flutter', 'iOS', 'Android', 'Swift', 'Kotlin'] },
+        { name: 'Security', skills: ['Penetration Testing', 'OWASP', 'Cryptography', 'Network Security', 'IAM'] },
+        { name: 'Architecture', skills: ['Microservices', 'System Design', 'API Design', 'Event-Driven', 'DDD'] }
+      ];
+
+      // Generate names
+      const firstNames = ['Alex', 'Sarah', 'John', 'Emma', 'Michael', 'Lisa', 'David', 'Anna', 'James', 'Maria', 
+                         'Robert', 'Jennifer', 'William', 'Patricia', 'Richard', 'Linda', 'Thomas', 'Barbara', 
+                         'Charles', 'Elizabeth', 'Chris', 'Susan', 'Daniel', 'Jessica', 'Matthew', 'Karen',
+                         'Andrew', 'Nancy', 'Paul', 'Betty', 'Mark', 'Helen', 'Steven', 'Sandra', 'Kenneth',
+                         'Donna', 'Kevin', 'Carol', 'Brian', 'Ruth', 'George', 'Sharon', 'Edward', 'Michelle',
+                         'Ronald', 'Laura', 'Anthony', 'Sarah', 'Jason', 'Kimberly', 'Ryan', 'Deborah',
+                         'Jacob', 'Dorothy', 'Gary', 'Amy', 'Nicholas', 'Angela', 'Eric', 'Ashley'];
+      
+      const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis',
+                         'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Gonzalez', 'Wilson', 'Anderson',
+                         'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee', 'Perez', 'Thompson',
+                         'White', 'Harris', 'Sanchez', 'Clark', 'Ramirez', 'Lewis', 'Robinson', 'Walker',
+                         'Young', 'Allen', 'King', 'Wright', 'Scott', 'Torres', 'Nguyen', 'Hill', 'Flores',
+                         'Green', 'Adams', 'Nelson', 'Baker', 'Hall', 'Rivera', 'Campbell', 'Mitchell',
+                         'Carter', 'Roberts', 'Gomez', 'Phillips', 'Evans', 'Turner', 'Diaz', 'Parker'];
+
+      // Generate 150 nodes with varied expertise
+      const nodes: Array<{ id: string; label: string; score: number; expertise: string[]; primaryExpertise: string }> = [];
+      const nodeCount = 150;
+      
+      for (let i = 0; i < nodeCount; i++) {
+        const firstName = firstNames[i % firstNames.length];
+        const lastName = lastNames[Math.floor(i / firstNames.length) % lastNames.length];
+        const name = `${firstName} ${lastName}`;
+        
+        // Assign primary expertise category
+        const primaryCategory = expertiseCategories[i % expertiseCategories.length];
+        
+        // Generate expertise array (primary + some secondary skills)
+        const expertise: string[] = [];
+        const primarySkillCount = 2 + Math.floor(Math.random() * 3);
+        for (let j = 0; j < primarySkillCount; j++) {
+          expertise.push(primaryCategory.skills[Math.floor(Math.random() * primaryCategory.skills.length)]);
+        }
+        
+        // Add some cross-functional skills
+        if (Math.random() > 0.5) {
+          const secondaryCategory = expertiseCategories[Math.floor(Math.random() * expertiseCategories.length)];
+          expertise.push(secondaryCategory.skills[Math.floor(Math.random() * secondaryCategory.skills.length)]);
+        }
+        
+        // Generate expertise score (higher for some key individuals)
+        let score = 10 + Math.random() * 40;
+        if (i < 10) score += 30; // Top experts
+        if (i === 0) { // Nick Expert
+          nodes.push({
+            id: `node-${i}`,
+            label: 'Nick Expert',
+            score: 95,
+            expertise: ['Kubernetes', 'Docker', 'AWS', 'Terraform', 'CI/CD', 'Infrastructure', 'Monitoring'],
+            primaryExpertise: 'Cloud/DevOps'
+          });
+        } else {
+          nodes.push({
+            id: `node-${i}`,
+            label: name,
+            score: Math.round(score),
+            expertise: [...new Set(expertise)], // Remove duplicates
+            primaryExpertise: primaryCategory.name
+          });
+        }
+      }
+      
+      // Generate edges based on shared expertise
+      const edges: Array<{ source: string; target: string; weight: number; sharedTopics: string[] }> = [];
+      const edgeCount = 400;
+      const addedEdges = new Set<string>();
+      
+      // First, create strong connections for top experts
+      for (let i = 0; i < 20; i++) {
+        for (let j = i + 1; j < Math.min(30, nodeCount); j++) {
+          if (Math.random() > 0.7) {
+            const edgeKey = `${i}-${j}`;
+            if (!addedEdges.has(edgeKey)) {
+              const sharedSkills = nodes[i].expertise.filter(skill => 
+                nodes[j].expertise.includes(skill)
+              );
+              if (sharedSkills.length > 0) {
+                edges.push({
+                  source: `node-${i}`,
+                  target: `node-${j}`,
+                  weight: 0.5 + Math.random() * 0.5,
+                  sharedTopics: sharedSkills
+                });
+                addedEdges.add(edgeKey);
+              }
+            }
+          }
+        }
+      }
+      
+      // Create connections based on same primary expertise
+      for (let i = 0; i < nodeCount; i++) {
+        for (let j = i + 1; j < nodeCount; j++) {
+          if (nodes[i].primaryExpertise === nodes[j].primaryExpertise && Math.random() > 0.85) {
+            const edgeKey = `${i}-${j}`;
+            if (!addedEdges.has(edgeKey) && edges.length < edgeCount) {
+              edges.push({
+                source: `node-${i}`,
+                target: `node-${j}`,
+                weight: 0.3 + Math.random() * 0.4,
+                sharedTopics: [nodes[i].primaryExpertise]
+              });
+              addedEdges.add(edgeKey);
+            }
+          }
+        }
+      }
+      
+      // Add random cross-functional connections
+      while (edges.length < edgeCount) {
+        const i = Math.floor(Math.random() * nodeCount);
+        const j = Math.floor(Math.random() * nodeCount);
+        if (i !== j) {
+          const edgeKey = i < j ? `${i}-${j}` : `${j}-${i}`;
+          if (!addedEdges.has(edgeKey)) {
+            const sharedSkills = nodes[i].expertise.filter(skill => 
+              nodes[j].expertise?.includes(skill)
+            );
+            if (sharedSkills.length > 0 || Math.random() > 0.9) {
+              edges.push({
+                source: `node-${Math.min(i, j)}`,
+                target: `node-${Math.max(i, j)}`,
+                weight: 0.1 + Math.random() * 0.3,
+                sharedTopics: sharedSkills.length > 0 ? sharedSkills : ['Collaboration']
+              });
+              addedEdges.add(edgeKey);
+            }
+          }
+        }
+      }
+      
+      // Return the mocked data
+      return res.json({ 
+        nodes: nodes.map(n => ({ 
+          id: n.id, 
+          label: n.label, 
+          score: n.score,
+          expertise: n.expertise,
+          primaryExpertise: n.primaryExpertise
+        })), 
+        edges: edges.map(e => ({ 
+          source: e.source, 
+          target: e.target, 
+          weight: e.weight, 
+          sharedTopics: e.sharedTopics 
+        })), 
+        insights: { type: 'knowledge' },
+        expertiseCategories: expertiseCategories.map(cat => cat.name)
+      });
     } catch (e) {
       console.error('knowledge graph error', e);
       return res.json({ nodes: [], edges: [], insights: { type: 'knowledge' } });
