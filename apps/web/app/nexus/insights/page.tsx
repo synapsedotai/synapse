@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -111,7 +111,7 @@ const hrRiskAlerts = [
   }
 ];
 
-export default function NexusInsights() {
+function NexusInsightsContent() {
   const searchParams = useSearchParams();
   const highlightParam = searchParams.get('highlight');
   const [resolvedAlerts, setResolvedAlerts] = useState<string[]>([]);
@@ -427,5 +427,56 @@ export default function NexusInsights() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// Loading fallback component
+function InsightsLoading() {
+  return (
+    <div className="p-8 space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">HR Intelligence</h1>
+        <p className="text-muted-foreground">
+          Knowledge retention risks and strategic talent insights
+        </p>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader className="space-y-2">
+              <div className="h-4 bg-gray-200 rounded w-24"></div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-gray-200 rounded w-12 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-32"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      <Card className="border-black/10">
+        <CardHeader>
+          <div className="h-6 bg-gray-200 rounded w-48 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-64"></div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="p-4 border rounded-lg bg-white">
+              <div className="h-20 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function NexusInsights() {
+  return (
+    <Suspense fallback={<InsightsLoading />}>
+      <NexusInsightsContent />
+    </Suspense>
   );
 }
