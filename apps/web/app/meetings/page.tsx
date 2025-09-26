@@ -27,7 +27,7 @@ const liveMeeting = {
   duration: "30 min",
   type: "video",
   status: "about-to-start",
-  joinUrl: "https://meet.google.com/onz-fhcf-yaf"
+  joinUrl: "https://meet.google.com/jec-ztpb-rss"
 };
 
 const upcomingMeetings = [
