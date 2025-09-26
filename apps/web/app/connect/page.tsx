@@ -131,7 +131,7 @@ export default function ConnectPage() {
             setTimeout(() => {
               setIsSearching(false);
               setShowProfile(true);
-            }, 10000);
+            }, 1000);
             return { employee: emp, reason };
           },
         }),
@@ -187,7 +187,7 @@ Never rush to match. A good understanding saves time.`,
                 if (emp) {
                   setSelectedEmployee(emp);
                   setIsSearching(true);
-                  setRedirectCountdown(10);
+                  setRedirectCountdown(1);
                   
                   const timer = setInterval(() => {
                     setRedirectCountdown(prev => {
